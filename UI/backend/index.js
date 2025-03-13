@@ -5,6 +5,7 @@ const cors = require('cors');
 
 // Importamos las rutas de passport
 const passportRoutes = require('./routes/passportRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
 
 const app = express();
 
@@ -23,6 +24,9 @@ mongoose
 
 // Rutas
 app.use('/api/passports', passportRoutes);
+app.use('/api/upload', uploadRoutes);
+app.use('/uploads', express.static('uploads'));
+
 
 // Iniciar el servidor
 const PORT = process.env.PORT || 5000;

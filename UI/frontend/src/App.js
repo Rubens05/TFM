@@ -7,6 +7,7 @@ function App() {
   const [serialNumber, setSerialNumber] = useState('');
   const [attributes, setAttributes] = useState([]); // Array de { key, value }
   const [passports, setPassports] = useState([]);
+  const [selectedFile, setSelectedFile] = useState(null); // Para el CSV
 
   useEffect(() => {
     fetchPassports();
@@ -22,34 +23,10 @@ function App() {
     }
   };
 
-  // Manejar envío del formulario para crear un nuevo DPP
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    // Convertimos el array de atributos en un objeto, si así lo deseas:
-    // { "color": "rojo", "tamaño": "grande", ... }
-    const attributesObj = attributes.reduce((acc, curr) => {
-      acc[curr.key] = curr.value;
-      return acc;
-    }, {});
-
-    try {
-      const res = await axios.post('http://localhost:5000/api/passports', {
-        name,
-        serialNumber,
-        attributes: attributesObj,
-      });
-      console.log('DPP creado:', res.data);
-
-      // Limpiar campos
-      setName('');
-      setSerialNumber('');
-      setAttributes([]);
-
-      // Refrescar la lista
-      fetchPassports();
-    } catch (error) {
-      console.error('Error al crear DPP:', error);
+  // Manejar la selección del archivo CSV
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedFile(e.target.files[0]);
     }
   };
 
@@ -72,7 +49,55 @@ function App() {
     setAttributes(updatedAttributes);
   };
 
-  // Crear un passport de prueba (opcional)
+  // Manejar envío del formulario para crear un nuevo DPP
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Convertir el array de atributos en un objeto
+    const attributesObj = attributes.reduce((acc, curr) => {
+      acc[curr.key] = curr.value;
+      return acc;
+    }, {});
+
+    // Si se ha seleccionado un CSV, se sube primero
+    if (selectedFile) {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      try {
+        const uploadResponse = await axios.post('http://localhost:5000/api/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        // Suponemos que en la respuesta viene información del archivo subido (ej. filename)
+        // y lo añadimos a los atributos, por ejemplo, en la propiedad "dataset"
+        attributesObj.dataset = uploadResponse.data.file;
+      } catch (uploadError) {
+        console.error('Error al subir el archivo:', uploadError);
+        // Podrías decidir abortar o continuar sin el CSV
+      }
+    }
+
+    try {
+      const res = await axios.post('http://localhost:5000/api/passports', {
+        name,
+        serialNumber,
+        attributes: attributesObj,
+      });
+      console.log('DPP creado:', res.data);
+
+      // Limpiar campos
+      setName('');
+      setSerialNumber('');
+      setAttributes([]);
+      setSelectedFile(null);
+
+      // Refrescar la lista
+      fetchPassports();
+    } catch (error) {
+      console.error('Error al crear DPP:', error);
+    }
+  };
+
+  // Función para crear un passport de prueba (opcional)
   const handleCreateTestPassport = async () => {
     const testPassport = {
       name: 'Producto de prueba',
@@ -133,6 +158,12 @@ function App() {
           />
         </div>
 
+        {/* Input para subir el archivo CSV (opcional) */}
+        <div style={{ marginBottom: '8px' }}>
+          <label>Subir Dataset CSV (opcional)</label>
+          <input type="file" accept=".csv" onChange={handleFileChange} />
+        </div>
+
         <h3>Atributos</h3>
         {/* Renderizar los atributos dinámicos */}
         {attributes.map((attr, index) => (
@@ -176,12 +207,22 @@ function App() {
       <h2>Lista de DPPs</h2>
       <ul>
         {passports.map((passport) => (
-          <li key={passport._id}>
+          <li key={passport._id} style={{ marginBottom: '16px' }}>
             <strong>{passport.name}</strong> - {passport.serialNumber}
             <br />
             Atributos: {JSON.stringify(passport.attributes)}
             <br />
             Creado: {new Date(passport.createdAt).toLocaleString()}
+            <br />
+            {/* Si existe un CSV asociado, mostrar enlace de descarga */}
+            {passport.attributes.dataset && (
+              <a
+                href={`http://localhost:5000/uploads/${passport.attributes.dataset.filename}`}
+                download={passport.attributes.dataset.originalname}
+              >
+                Descargar CSV
+              </a>
+            )}
             <hr />
           </li>
         ))}
@@ -191,4 +232,3 @@ function App() {
 }
 
 export default App;
-  

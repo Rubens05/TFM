@@ -1,4 +1,3 @@
-// server/routes/passportRoutes.js
 const express = require('express');
 const router = express.Router();
 const Passport = require('../models/Passport');
