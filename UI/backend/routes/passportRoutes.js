@@ -24,4 +24,29 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Eliminar un DPP
+router.delete('/:id', async (req, res) => {
+  try {
+    await Passport.findByIdAndDelete(req.params.id);
+    return res.status(200).json({ message: 'DPP eliminado correctamente' });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// Actualizar un DPP
+router.put('/:id', async (req, res) => {
+  try {
+    const updatedPassport = await Passport.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+    return res.status(200).json(updatedPassport);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+
 module.exports = router;

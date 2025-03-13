@@ -8,6 +8,8 @@ function App() {
   const [attributes, setAttributes] = useState([]); // Array de { key, value }
   const [passports, setPassports] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null); // Para el CSV
+  const [editingId, setEditingId] = useState(null); // Si se está editando un DPP
+
 
   useEffect(() => {
     fetchPassports();
@@ -96,6 +98,32 @@ function App() {
       console.error('Error al crear DPP:', error);
     }
   };
+
+  // Manejar la eliminación de un DPP
+  const handleDeletePassport = async (id) => {
+    try {
+      await axios.delete(`http://localhost:5000/api/passports/${id}`);
+      console.log('DPP eliminado');
+      fetchPassports();
+    } catch (error) {
+      console.error('Error al eliminar el DPP:', error);
+    }
+  };
+
+  // Manejar la edición de un DPP: cargar datos en el formulario
+  const handleEditPassport = (passport) => {
+    setEditingId(passport._id);
+    setName(passport.name);
+    setSerialNumber(passport.serialNumber);
+    // Convertir el objeto de atributos en un array para el formulario
+    const attrsArray = Object.entries(passport.attributes)
+      // Si tienes una propiedad "dataset", la omites del formulario de atributos
+      .filter(([key]) => key !== 'dataset')
+      .map(([key, value]) => ({ key, value }));
+    setAttributes(attrsArray);
+    // No se carga el archivo CSV en el estado 'selectedFile'
+  };
+
 
   // Función para crear un passport de prueba (opcional)
   const handleCreateTestPassport = async () => {
@@ -194,7 +222,7 @@ function App() {
         </button>
 
         <div style={{ marginTop: '16px' }}>
-          <button type="submit">Crear DPP</button>
+          <button type="submit">{editingId ? 'Actualizar DPP' : 'Crear DPP'}</button>
         </div>
       </form>
 
@@ -223,6 +251,9 @@ function App() {
                 Descargar CSV
               </a>
             )}
+            <br />
+            <button onClick={() => handleEditPassport(passport)}>Modificar</button>
+            <button onClick={() => handleDeletePassport(passport._id)}>Eliminar</button>
             <hr />
           </li>
         ))}
