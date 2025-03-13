@@ -62,12 +62,20 @@ function App() {
   return (
     <div style={{ maxWidth: '600px', margin: '0 auto' }}>
       <h1>Digital Product Passport</h1>
-      <DPPForm
-        onSubmit={handleFormSubmit}
-        editingId={editingId}
-        initialData={initialFormData}
-        onCancel={handleCancelEdit}
-      />
+      {editingId ? (
+        <DPPForm
+          key={editingId} // << forzamos re-montaje cuando cambia editingId
+          editingId={editingId}
+          initialData={initialFormData}
+          onSubmit={handleFormSubmit}
+          onCancel={handleCancelEdit}
+        />
+      ) : (
+        <DPPForm
+          key="new" // << para el formulario de creación
+          onSubmit={handleFormSubmit}
+        />
+      )}
       <hr />
       <DPPList
         passports={passports}

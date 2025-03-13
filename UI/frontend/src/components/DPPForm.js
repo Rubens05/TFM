@@ -6,12 +6,14 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
   const [name, setName] = useState('');
   const [serialNumber, setSerialNumber] = useState('');
   const [attributes, setAttributes] = useState([]); // Array de { key, value }
-  const [selectedDatasets, setSelectedDatasets] = useState([]);
+  const [existingDatasets, setExistingDatasets] = useState([]); // Datasets que ya existían
+  const [selectedDatasets, setSelectedDatasets] = useState([]); // Datasets nuevos (CSV) subidos
 
   useEffect(() => {
     if (initialData) {
       setName(initialData.name || '');
       setSerialNumber(initialData.serialNumber || '');
+      setExistingDatasets(initialData.datasets || []); // Guardar los datasets que ya existían
       // Convertir currentAttributes a un array (excluyendo "datasets")
       const attrArray = Object.entries(initialData.currentAttributes || {})
         .filter(([key]) => key !== 'datasets')
@@ -52,6 +54,12 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
     }
   };
 
+  // Permitir quitar un dataset existente
+  const handleRemoveExistingDataset = (index) => {
+    setExistingDatasets((prev) => prev.filter((_, i) => i !== index));
+  };
+
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -61,7 +69,7 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
       return acc;
     }, {});
 
-    // Subir datasets (si se seleccionaron)
+    // Subir los nuevos datasets (si se seleccionaron)
     let uploadedDatasets = [];
     if (selectedDatasets.length > 0) {
       const uploadPromises = selectedDatasets.map((file) => {
@@ -73,24 +81,39 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
       });
       try {
         const responses = await Promise.all(uploadPromises);
-        uploadedDatasets = responses.map((res) => res.data.file);
+        // Filtrar para conservar solo los campos deseados, por ejemplo, originalname, encoding, mimetype, size, y filename (si necesitas enlace)
+        uploadedDatasets = responses.map((res) => {
+          const fileData = res.data.file;
+          return {
+            originalname: fileData.originalname,
+            encoding: fileData.encoding,
+            mimetype: fileData.mimetype,
+            size: fileData.size,
+            filename: fileData.filename, // Se conserva para descarga
+          };
+        });
       } catch (error) {
         console.error('Error al subir los datasets:', error);
       }
     }
-    // Agregar los datasets subidos al objeto de atributos (y enviarlos como propiedad separada)
-    attributesObj.datasets = uploadedDatasets;
+
+    // Combinar los datasets: los existentes (después de quitar los que se eliminaron) y los nuevos subidos
+    const finalDatasets = [...existingDatasets, ...uploadedDatasets];
+
+    // Incluir el array final en los datos que se enviarán
+    attributesObj.datasets = finalDatasets;
 
     const formData = {
       name,
       serialNumber,
       attributes: attributesObj,
-      datasets: uploadedDatasets,
+      datasets: finalDatasets, // Este array se enviará para crear la nueva versión con la lista final de datasets
     };
 
     onSubmit(formData);
     clearForm();
   };
+
 
   return (
     <form onSubmit={handleSubmit}>
@@ -102,6 +125,7 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
           onChange={(e) => setName(e.target.value)}
           required
           style={{ width: '100%', marginTop: '4px' }}
+          disabled={!!editingId} // Si se quiere bloquear la edición del nombre
         />
       </div>
       <div style={{ marginBottom: '8px' }}>
@@ -112,11 +136,8 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
           onChange={(e) => setSerialNumber(e.target.value)}
           required
           style={{ width: '100%', marginTop: '4px' }}
+          disabled={!!editingId} // Bloqueado si se edita
         />
-      </div>
-      <div style={{ marginBottom: '8px' }}>
-        <label>Subir Dataset(s) CSV (opcional)</label>
-        <input type="file" accept=".csv" multiple onChange={handleDatasetsChange} />
       </div>
       <h3>Atributos</h3>
       {attributes.map((attr, index) => (
@@ -143,6 +164,32 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
       <button type="button" onClick={handleAddAttribute}>
         Añadir atributo
       </button>
+      <h3>Datasets</h3>
+
+      {/* Mostrar datasets existentes con opción de quitar solo si se está editando */}
+
+      {existingDatasets.length > 0 && (
+        <div style={{ marginBottom: '8px' }}>
+          <strong>Datasets existentes:</strong>
+          {existingDatasets.map((ds, idx) => (
+            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>{ds.originalname}</span>
+              <button type="button" onClick={() => handleRemoveExistingDataset(idx)}>
+                Quitar
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div style={{ marginBottom: '8px' }}>
+        <label>Subir Dataset(s) CSV</label>
+        <br />
+        <small>Seleccione uno o más archivos CSV</small>
+        <br />
+        <input type="file" accept=".csv" multiple onChange={handleDatasetsChange} />
+      </div>
+
       <div style={{ marginTop: '16px' }}>
         <button type="submit">{editingId ? 'Actualizar DPP' : 'Crear DPP'}</button>
         {editingId && (
