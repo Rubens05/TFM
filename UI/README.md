@@ -1,9 +1,7 @@
 TODO
+Controlar que no se pueda actualizar un DPP si no hay cambios, es decir: si no hay nuevos atributos o modificaciones en los anteriores o si no hay datasets nuevos subidos.
 
-
-Controlar que se puedan quitar datasets de un DPP (implica Versión+1) Problema: no los quita del DPP, los quita del formulario, y los que no se quitan los duplica al darle a actualizar.
-
-Controlar que se puedan quitar más de un dataset en la misma modificación (implica versión + 1, igual que el anterior)
+Controlar que si los campos atributo/valor están vacios, no se pueda crear/actualizar el DPP
 
 Controlar que cuando se borre un DPP, se borre también los csv asociados a ese DPP de la carpeta uploads (para no tener documentos huérfanos) y borrar además de la BBDD las entradas relacionadas (creación, actualización, etc) (En la blockchain si que quedaría trazado todo, hasta la eliminación)
 

@@ -13,12 +13,15 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
     if (initialData) {
       setName(initialData.name || '');
       setSerialNumber(initialData.serialNumber || '');
-      setExistingDatasets(initialData.datasets || []); // Guardar los datasets que ya existían
-      // Convertir currentAttributes a un array (excluyendo "datasets")
-      const attrArray = Object.entries(initialData.currentAttributes || {})
+      // Suponiendo que "versions" es un array y la versión vigente es la última
+      const latestVersion = initialData.versions[initialData.versions.length - 1];
+      // Convertir los atributos de la versión vigente a un array (excluyendo datasets)
+      const attrArray = Object.entries(latestVersion.attributes || {})
         .filter(([key]) => key !== 'datasets')
         .map(([key, value]) => ({ key, value }));
       setAttributes(attrArray);
+      // Extraer los datasets de la versión vigente
+      setExistingDatasets(latestVersion.datasets || []);
     } else {
       clearForm();
     }
@@ -174,7 +177,7 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
           {existingDatasets.map((ds, idx) => (
             <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span>{ds.originalname}</span>
-              <button type="button" onClick={() => handleRemoveExistingDataset(idx)}>
+              <button type="button" onClick={() => setExistingDatasets(prev => prev.filter((_, i) => i !== idx))}>
                 Quitar
               </button>
             </div>
