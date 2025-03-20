@@ -34,8 +34,14 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
     setSelectedDatasets([]);
   };
 
+  // Añadir un nuevo atributo
   const handleAddAttribute = () => {
     setAttributes((prev) => [...prev, { key: '', value: '' }]);
+  };
+
+  // Eliminar un atributo existente
+  const handleRemoveAttribute = (index) => {
+    setAttributes((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleAttributeKeyChange = (index, newKey) => {
@@ -65,6 +71,14 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validar que no haya atributos con campos vacíos
+    for (let i = 0; i < attributes.length; i++) {
+      if (!attributes[i].key.trim() || !attributes[i].value.trim()) {
+        alert("Todos los atributos deben tener nombre y valor.");
+        return;
+      }
+    }
 
     // Convertir atributos de array a objeto
     const attributesObj = attributes.reduce((acc, curr) => {
@@ -161,12 +175,19 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
               onChange={(e) => handleAttributeValueChange(index, e.target.value)}
               style={{ flex: '1' }}
             />
+            <button type="button" onClick={() => handleRemoveAttribute(index)}>
+              Eliminar
+            </button>
           </div>
+
         </div>
+
+
       ))}
       <button type="button" onClick={handleAddAttribute}>
         Añadir atributo
       </button>
+
       <h3>Datasets</h3>
 
       {/* Mostrar datasets existentes con opción de quitar solo si se está editando */}
