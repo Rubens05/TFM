@@ -9,12 +9,15 @@ const path = require('path');
 // Crear un nuevo DPP (versión 1)
 router.post('/', async (req, res) => {
   try {
-    const { name, serialNumber, attributes, datasets } = req.body;
+    const { name, serialNumber, attributes, datasets, photo } = req.body;
+    console.log(req.body);
     const initialDatasets = datasets || [];
+    const initialPhoto = photo || null;
     const initialVersion = {
       version: 1,
       attributes: attributes,
       datasets: initialDatasets,
+      photo: initialPhoto,
     };
     const newPassport = new Passport({
       name,
@@ -22,6 +25,7 @@ router.post('/', async (req, res) => {
       currentAttributes: attributes,
       versions: [initialVersion],
       datasets: initialDatasets,
+      photo: initialPhoto,
     });
     await newPassport.save();
     return res.status(201).json(newPassport);
@@ -35,8 +39,8 @@ router.post('/', async (req, res) => {
 // Actualizar (editar) un DPP: se añade una nueva versión
 router.put('/:id', async (req, res) => {
   try {
-    const { attributes, datasets } = req.body;
-    // "datasets" es el array final (sin los que se quitaron, con los que se añadieron)
+    const { attributes, datasets, photo } = req.body;
+    // "datasets" es el array final (sin los que se quitaron y con los que se añadieron)
 
     const passport = await Passport.findById(req.params.id);
     if (!passport) {
@@ -46,12 +50,20 @@ router.put('/:id', async (req, res) => {
     // Actualiza atributos actuales
     passport.currentAttributes = attributes;
 
+    // Actualiza la foto de la versión actual
+    if (photo) {
+      console.log(photo);
+
+      passport.photo = photo;
+    }
+
     // Crea la nueva versión
     const newVersionNumber = passport.versions.length + 1;
     const newVersion = {
       version: newVersionNumber,
       attributes: attributes,
       datasets: datasets || [], // uso literal del array que llega
+      photo: photo || null,
       createdAt: new Date()
     };
 
@@ -73,28 +85,14 @@ router.put('/:id', async (req, res) => {
 // Obtener todos los DPPs
 router.get('/', async (req, res) => {
   try {
-
     const passports = await Passport.find();
-
-    // Filtras los campos sensibles en la respuesta (sin modificar la BD)
-    passports.forEach((p) => {
-      p.versions.forEach((v) => {
-        v.datasets.forEach((ds) => {
-          // Eliminas lo que no quieras exponer
-          delete ds.path;
-          delete ds.destination;
-          // Podrías eliminar también ds.filename si no quieres mostrarlo
-        });
-      });
-    });
-
     res.json(passports);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Eliminar un DPP y sus datasets asociados
+// Eliminar un DPP, sus datasets y fotos 
 router.delete('/:id', async (req, res) => {
   try {
     const passport = await Passport.findById(req.params.id);
@@ -104,8 +102,9 @@ router.delete('/:id', async (req, res) => {
 
     // Recorrer cada versión y cada dataset para eliminar el archivo de forma síncrona
     for (const version of passport.versions) {
+      // Eliminar los archivos de cada dataset
       for (const ds of version.datasets) {
-        const filePath = path.join(__dirname, '../uploads', ds.filename);
+        const filePath = path.join(__dirname, '../docs', ds.filename);
         if (fs.existsSync(filePath)) {
           try {
             await fs.promises.unlink(filePath);
@@ -115,6 +114,20 @@ router.delete('/:id', async (req, res) => {
           }
         }
       }
+
+      // Eliminar la foto de la versión
+      if (version.photo) {
+        const photoPath = path.join(__dirname, '../imgs', version.photo.filename);
+        if (fs.existsSync(photoPath)) {
+          try {
+            await fs.promises.unlink(photoPath);
+            console.log(`Foto eliminada: ${photoPath}`);
+          } catch (err) {
+            console.error(`Error eliminando foto: ${photoPath}`, err);
+          }
+        }
+      }
+
     }
 
     // Eliminar el documento después de borrar los archivos

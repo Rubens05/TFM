@@ -1,14 +1,22 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 
 const router = express.Router();
 
 // Configurar almacenamiento de archivos con Multer
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
+        // Si no existe, crea la carpeta "uploads"
+        const dir = 'docs/';
+        if (!fs.existsSync(dir)) {
+            console.log('Creando carpeta docs/');
+            fs.mkdirSync(dir);
+        }
+
         // Guarda los archivos en la carpeta "uploads"
-        cb(null, 'uploads/');
+        cb(null, 'docs/');
     },
     filename: function (req, file, cb) {
         // Genera un nombre único para el archivo (por ejemplo, file-<timestamp>.csv)

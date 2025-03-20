@@ -5,6 +5,7 @@ const versionSchema = new mongoose.Schema({
   version: { type: Number, required: true },
   attributes: { type: Object, required: true },
   datasets: { type: [Object], default: [] }, // Cada versión con su propio array de datasets
+  photo: { type: Object, default: null },
   createdAt: { type: Date, default: Date.now },
 });
 

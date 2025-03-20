@@ -1,11 +1,13 @@
-// server/index.js
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
+
 
 // Importamos las rutas de passport
 const passportRoutes = require('./routes/passportRoutes');
-const uploadRoutes = require('./routes/uploadRoutes');
+const uploadDocRoutes = require('./routes/docRoutes'); // Nuevo nombre para documentos
+const uploadImgRoutes = require('./routes/imgRoutes'); // Nueva ruta para imágenes
 
 const app = express();
 
@@ -13,7 +15,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Conexión a MongoDB (reemplaza <tu_uri> con la cadena de conexión, por ejemplo, 'mongodb://localhost:27017/dpp')
+// Conexión a MongoDB
 mongoose
   .connect('mongodb://localhost:27017/dpp', {
     useNewUrlParser: true,
@@ -24,8 +26,13 @@ mongoose
 
 // Rutas
 app.use('/api/passports', passportRoutes);
-app.use('/api/upload', uploadRoutes);
-app.use('/uploads', express.static('uploads'));
+app.use('/api/upload/doc', uploadDocRoutes); // Ruta para documentos
+app.use('/api/upload/img', uploadImgRoutes); // Ruta para imágenes
+
+// Servir archivos estáticos
+app.use('/uploadDoc', express.static('uploadDoc')); // Archivos de documentos
+app.use('/uploadImg', express.static('uploadImg')); // Archivos de imágenes
+app.use('/imgs', express.static(path.join(__dirname, 'imgs')));
 
 
 // Iniciar el servidor

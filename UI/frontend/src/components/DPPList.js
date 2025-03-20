@@ -14,11 +14,15 @@ function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onD
             const defaultVersion = passport.versions[passport.versions.length - 1];
             const selectedVersion = selectedVersions[passport._id] || defaultVersion;
             const displayedAttributes = { ...selectedVersion.attributes };
+            // Eliminar "datasets" de los atributos a mostrar
             delete displayedAttributes.datasets;
+            // Eliminar "photo" de los atributos a mostrar
+            delete displayedAttributes.photo;
+
 
             return (
               <li key={passport._id} style={{ marginBottom: '16px' }}>
-                <strong>{passport.name}</strong> - {passport.serialNumber}
+                <strong>{passport.name} - {passport.serialNumber}</strong>
                 <br />
                 <label>Versión: </label>
                 <select
@@ -40,7 +44,23 @@ function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onD
                 </select>
                 <br />
 
-                {/* 2. Muestra atributos sin "datasets" */}
+                {/* 1. Muestra la foto si exiset, si no existe, muestra una foto plantilla */}
+                {selectedVersion.photo ? (
+                  <img
+                    src={`http://localhost:5000/imgs/${selectedVersion.photo.filename}`}
+                    style={{ maxWidth: '200px', marginTop: '8px' }}
+                  />
+                ) : (
+                  <img
+                    src="/defaultimg.png"
+                    alt="Foto del producto"
+                    style={{ maxWidth: '200px', marginTop: '8px' }}
+                  />
+                )}
+
+
+
+                {/* 2. Muestra atributos sin "datasets"*/}
                 <div>
                   <strong>Atributos (v{selectedVersion.version}):</strong>
                   <pre>{JSON.stringify(displayedAttributes, null, 2)}</pre>
@@ -59,7 +79,7 @@ function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onD
                 "originalname" para mostrar el nombre real.
               */}
                           <a
-                            href={`http://localhost:5000/uploads/${ds.filename}`}
+                            href={`http://localhost:5000/docs/${ds.filename}`}
                             download={ds.originalname}
                           >
                             {ds.originalname}

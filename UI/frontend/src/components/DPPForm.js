@@ -8,6 +8,9 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
   const [attributes, setAttributes] = useState([]); // Array de { key, value }
   const [existingDatasets, setExistingDatasets] = useState([]); // Datasets que ya existían
   const [selectedDatasets, setSelectedDatasets] = useState([]); // Datasets nuevos (CSV) subidos
+  const [selectedPhoto, setSelectedPhoto] = useState(null); // Imagen seleccionada
+  const [existingPhoto, setExistingPhoto] = useState(null); // Imagen existente
+
 
   useEffect(() => {
     if (initialData) {
@@ -17,11 +20,17 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
       const latestVersion = initialData.versions[initialData.versions.length - 1];
       // Convertir los atributos de la versión vigente a un array (excluyendo datasets)
       const attrArray = Object.entries(latestVersion.attributes || {})
-        .filter(([key]) => key !== 'datasets')
+        .filter(([key]) => key !== 'datasets' && key !== 'photo')
         .map(([key, value]) => ({ key, value }));
       setAttributes(attrArray);
       // Extraer los datasets de la versión vigente
       setExistingDatasets(latestVersion.datasets || []);
+      // Cargar foto existente (si la hay) de la versión vigente
+      if (latestVersion.photo) {
+        setExistingPhoto(latestVersion.photo);
+      } else {
+        setExistingPhoto(null);
+      }
     } else {
       clearForm();
     }
@@ -32,6 +41,8 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
     setSerialNumber('');
     setAttributes([]);
     setSelectedDatasets([]);
+    setExistingPhoto(null);
+    setSelectedPhoto(null);
   };
 
   // Añadir un nuevo atributo
@@ -63,22 +74,24 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
     }
   };
 
-  // Permitir quitar un dataset existente
-  const handleRemoveExistingDataset = (index) => {
-    setExistingDatasets((prev) => prev.filter((_, i) => i !== index));
+  // Permitir eliminar la foto existente
+  const handleRemoveExistingPhoto = () => {
+    setExistingPhoto(null);
   };
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Validar que no haya atributos con campos vacíos
     for (let i = 0; i < attributes.length; i++) {
-      if (!attributes[i].key.trim() || !attributes[i].value.trim()) {
+      const key = typeof attributes[i].key === 'string' ? attributes[i].key.trim() : '';
+      const value = typeof attributes[i].value === 'string' ? attributes[i].value.trim() : '';
+      if (!key || !value) {
         alert("Todos los atributos deben tener nombre y valor.");
         return;
       }
     }
+
 
     // Convertir atributos de array a objeto
     const attributesObj = attributes.reduce((acc, curr) => {
@@ -92,45 +105,74 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
       const uploadPromises = selectedDatasets.map((file) => {
         const formData = new FormData();
         formData.append('file', file);
-        return axios.post('http://localhost:5000/api/upload', formData, {
+        return axios.post('http://localhost:5000/api/upload/doc', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
       });
+
       try {
         const responses = await Promise.all(uploadPromises);
-        // Filtrar para conservar solo los campos deseados, por ejemplo, originalname, encoding, mimetype, size, y filename (si necesitas enlace)
-        uploadedDatasets = responses.map((res) => {
-          const fileData = res.data.file;
-          return {
-            originalname: fileData.originalname,
-            encoding: fileData.encoding,
-            mimetype: fileData.mimetype,
-            size: fileData.size,
-            filename: fileData.filename, // Se conserva para descarga
-          };
-        });
+        uploadedDatasets = responses.map((res) => ({
+          originalname: res.data.file.originalname,
+          encoding: res.data.file.encoding,
+          mimetype: res.data.file.mimetype,
+          size: res.data.file.size,
+          filename: res.data.file.filename,
+        }));
       } catch (error) {
         console.error('Error al subir los datasets:', error);
+      }
+    }
+
+    // Subir la imagen si se seleccionó
+    let uploadedImage = null;
+    if (selectedPhoto) {  // Asegúrate de que `selectedImage` contiene un archivo antes de subirlo
+      const imageFormData = new FormData();
+      imageFormData.append('image', selectedPhoto);
+
+      try {
+        const imageResponse = await axios.post('http://localhost:5000/api/upload/img', imageFormData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+
+        uploadedImage = {
+          originalname: imageResponse.data.file.originalname,
+          encoding: imageResponse.data.file.encoding,
+          mimetype: imageResponse.data.file.mimetype,
+          size: imageResponse.data.file.size,
+          filename: imageResponse.data.file.filename, // Se conserva para descarga
+        };
+      } catch (error) {
+        console.error('Error al subir la imagen:', error);
       }
     }
 
     // Combinar los datasets: los existentes (después de quitar los que se eliminaron) y los nuevos subidos
     const finalDatasets = [...existingDatasets, ...uploadedDatasets];
 
-    // Incluir el array final en los datos que se enviarán
+    // Incluir el array final y la imagen en los datos que se enviarán
     attributesObj.datasets = finalDatasets;
+    attributesObj.photo = uploadedImage; // Agregar la imagen
 
     const formData = {
       name,
       serialNumber,
       attributes: attributesObj,
-      datasets: finalDatasets, // Este array se enviará para crear la nueva versión con la lista final de datasets
+      datasets: finalDatasets, // Lista final de datasets
+      photo: uploadedImage, // Imagen subida
     };
 
     onSubmit(formData);
     clearForm();
   };
 
+
+  // Controlar que solo se pueda seleccionar una foto
+  const handlePhotoChange = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedPhoto(e.target.files[0]);
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit}>
@@ -187,6 +229,23 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
       <button type="button" onClick={handleAddAttribute}>
         Añadir atributo
       </button>
+
+      <h3>Foto (opcional)</h3>
+      <div style={{ marginBottom: '8px' }}>
+        <input type="file" accept="image/*" onChange={handlePhotoChange} />
+      </div>
+      {/* Mostrar la foto existente, con opción de quitar */}
+      {existingPhoto && (
+        <div style={{ marginBottom: '8px' }}>
+          <strong>Foto existente:</strong>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>{existingPhoto.originalname}</span>
+            <button type="button" onClick={handleRemoveExistingPhoto}>
+              Quitar foto
+            </button>
+          </div>
+        </div>
+      )}
 
       <h3>Datasets</h3>
 
