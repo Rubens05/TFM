@@ -81,8 +81,14 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Validar que no haya atributos con campos vacíos
+  
+    // 1. Validar que exista al menos un atributo
+    if (attributes.length === 0) {
+      alert("Debes añadir al menos un atributo.");
+      return;
+    }
+  
+    // 2. Validar que ningún atributo tenga campos vacíos
     for (let i = 0; i < attributes.length; i++) {
       const key = typeof attributes[i].key === 'string' ? attributes[i].key.trim() : '';
       const value = typeof attributes[i].value === 'string' ? attributes[i].value.trim() : '';
@@ -91,15 +97,14 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
         return;
       }
     }
-
-
-    // Convertir atributos de array a objeto
+  
+    // 3. Convertir el array de atributos a objeto
     const attributesObj = attributes.reduce((acc, curr) => {
       acc[curr.key] = curr.value;
       return acc;
     }, {});
-
-    // Subir los nuevos datasets (si se seleccionaron)
+  
+    // 4. Subir los nuevos datasets (si se seleccionaron)
     let uploadedDatasets = [];
     if (selectedDatasets.length > 0) {
       const uploadPromises = selectedDatasets.map((file) => {
@@ -109,7 +114,7 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
       });
-
+  
       try {
         const responses = await Promise.all(uploadPromises);
         uploadedDatasets = responses.map((res) => ({
@@ -123,48 +128,83 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
         console.error('Error al subir los datasets:', error);
       }
     }
-
-    // Subir la imagen si se seleccionó
+  
+    // 5. Combinar los datasets: los existentes (después de quitar los que se eliminaron)
+    //    y los nuevos subidos.
+    const finalDatasets = [...existingDatasets, ...uploadedDatasets];
+  
+    // 6. Subir la imagen si se seleccionó; si no, conservar la foto existente (si hay)
     let uploadedImage = null;
-    if (selectedPhoto) {  // Asegúrate de que `selectedImage` contiene un archivo antes de subirlo
+    if (selectedPhoto) {
       const imageFormData = new FormData();
       imageFormData.append('image', selectedPhoto);
-
       try {
         const imageResponse = await axios.post('http://localhost:5000/api/upload/img', imageFormData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
-
         uploadedImage = {
           originalname: imageResponse.data.file.originalname,
           encoding: imageResponse.data.file.encoding,
           mimetype: imageResponse.data.file.mimetype,
           size: imageResponse.data.file.size,
-          filename: imageResponse.data.file.filename, // Se conserva para descarga
+          filename: imageResponse.data.file.filename,
         };
       } catch (error) {
         console.error('Error al subir la imagen:', error);
       }
+    } else if (existingPhoto) {
+      uploadedImage = existingPhoto;
     }
+  
+    // 7. En modo edición, comparar con la última versión para ver si hay cambios
+    if (editingId && initialData) {
+      const latestVersion = initialData.versions[initialData.versions.length - 1];
+  
+      // Comparar el campo attributes, ignorando datasets y foto
+      const initialAttributes = Object.entries(latestVersion.attributes || {})
+        .filter(([key]) => key !== 'datasets' && key !== 'photo')
+        .map(([key, value]) => ({ key, value }));
+      const hasAttributeChanges = JSON.stringify(initialAttributes) !== JSON.stringify(attributes);
 
-    // Combinar los datasets: los existentes (después de quitar los que se eliminaron) y los nuevos subidos
-    const finalDatasets = [...existingDatasets, ...uploadedDatasets];
-
-    // Incluir el array final y la imagen en los datos que se enviarán
+    
+      
+      // Detectar si se han añadido nuevos atributos
+      const initialAttrKeys = Object.keys(latestVersion.attributes || {});
+      const currentAttrKeys = Object.keys(attributesObj);
+      const hasNewAttributes = currentAttrKeys.length > initialAttrKeys.length;
+      
+      // Comparar foto: se considera cambio si se seleccionó una nueva foto o si había foto y ahora se quitó
+      const initialPhoto = latestVersion.photo || null;
+      const hasPhotoChanges = !!selectedPhoto || (initialPhoto && !existingPhoto);
+      
+      // Comparar datasets: se compara el array final de datasets con el de la última versión
+      const hasDatasetChanges =
+        JSON.stringify(latestVersion.datasets) !== JSON.stringify(finalDatasets);
+  
+      if (!hasAttributeChanges && !hasNewAttributes && !hasPhotoChanges && !hasDatasetChanges) {
+        alert('No se detectaron cambios en el DPP.');
+        return;
+      }
+    }
+  
+    // 8. Incluir los datasets y la foto en el objeto de atributos (opcional)
     attributesObj.datasets = finalDatasets;
-    attributesObj.photo = uploadedImage; // Agregar la imagen
-
-    const formData = {
+    attributesObj.photo = uploadedImage;
+  
+    // 9. Armar el objeto final a enviar
+    const formDataToSend = {
       name,
       serialNumber,
       attributes: attributesObj,
-      datasets: finalDatasets, // Lista final de datasets
-      photo: uploadedImage, // Imagen subida
+      datasets: finalDatasets,
+      photo: uploadedImage,
     };
-
-    onSubmit(formData);
+  
+    // 10. Enviar el formulario y limpiar el formulario local
+    onSubmit(formDataToSend);
     clearForm();
   };
+  
 
 
   // Controlar que solo se pueda seleccionar una foto
@@ -207,6 +247,7 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
               type="text"
               placeholder="Nombre (ej. color)"
               value={attr.key}
+              required
               onChange={(e) => handleAttributeKeyChange(index, e.target.value)}
               style={{ flex: '1' }}
             />
@@ -214,6 +255,7 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
               type="text"
               placeholder="Valor (ej. rojo)"
               value={attr.value}
+              required
               onChange={(e) => handleAttributeValueChange(index, e.target.value)}
               style={{ flex: '1' }}
             />

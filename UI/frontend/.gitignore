@@ -22,5 +22,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Uploads directory from the backend
-/uploads
+# Docs and imgs
+/docs
+/imgs
