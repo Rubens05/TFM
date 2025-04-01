@@ -33,6 +33,7 @@ app.use('/api/upload/img', uploadImgRoutes); // Ruta para imágenes
 app.use('/uploadDoc', express.static('uploadDoc')); // Archivos de documentos
 app.use('/uploadImg', express.static('uploadImg')); // Archivos de imágenes
 app.use('/imgs', express.static(path.join(__dirname, 'imgs')));
+app.use('/docs', express.static(path.join(__dirname, 'docs')));
 
 
 // Iniciar el servidor

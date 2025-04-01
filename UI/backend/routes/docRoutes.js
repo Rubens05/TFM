@@ -21,7 +21,11 @@ const storage = multer.diskStorage({
     filename: function (req, file, cb) {
         // Genera un nombre único para el archivo (por ejemplo, file-<timestamp>.csv)
         const ext = path.extname(file.originalname);
-        cb(null, file.fieldname + '-' + Date.now() + ext);
+        // Poner el dia de hoy como nombre del archivo con el nombre original y la extensión
+        const date = new Date();
+        const formattedDate = date.toISOString().split('T')[0];
+        const newFileName = `${formattedDate}-${file.originalname.replace(ext, '')}${ext}`;
+        cb(null, newFileName);
     },
 });
 

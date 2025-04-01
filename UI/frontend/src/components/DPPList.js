@@ -1,5 +1,6 @@
 // client/src/components/DPPList.js
 import React from 'react';
+import DPPListStyles from './DPPListStyles';
 
 function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onDelete }) {
   return (
@@ -8,93 +9,96 @@ function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onD
       {passports.length === 0 ? (
         <p>No hay DPPs creados todavía.</p>
       ) : (
-        <ul>
+        <ul style={{ listStyle: 'none', padding: 0 }}>
           {passports.map((passport) => {
-            // Se toma por defecto la última versión
+            // Tomamos por defecto la última versión
             const defaultVersion = passport.versions[passport.versions.length - 1];
             const selectedVersion = selectedVersions[passport._id] || defaultVersion;
-            const displayedAttributes = { ...selectedVersion.attributes };
-            // Eliminar "datasets" de los atributos a mostrar
-            delete displayedAttributes.datasets;
-            // Eliminar "photo" de los atributos a mostrar
-            delete displayedAttributes.photo;
+            const attributesObj = selectedVersion.attributes || {};
 
+            // Definir URL de la foto, usando imagen por defecto si no hay foto.
+            const photoUrl = selectedVersion.photo
+              ? `http://localhost:5000/imgs/${selectedVersion.photo.filename}`
+              : '/defaultimg.png';
 
             return (
-              <li key={passport._id} style={{ marginBottom: '16px' }}>
-                <strong>{passport.name} - {passport.serialNumber}</strong>
-                <br />
-                <label>Versión: </label>
-                <select
-                  value={selectedVersion.version}
-                  onChange={(e) => {
-                    const verNum = parseInt(e.target.value, 10);
-                    const ver = passport.versions.find((v) => v.version === verNum);
-                    setSelectedVersions((prev) => ({
-                      ...prev,
-                      [passport._id]: ver,
-                    }));
-                  }}
-                >
-                  {passport.versions.map((v) => (
-                    <option key={v.version} value={v.version}>
-                      {`v${v.version} - ${new Date(v.createdAt).toLocaleString()}`}
-                    </option>
-                  ))}
-                </select>
-                <br />
-
-                {/* 1. Muestra la foto si exiset, si no existe, muestra una foto plantilla */}
-                {selectedVersion.photo ? (
+              <li key={passport._id} style={DPPListStyles.cardStyle}>
+                <div style={DPPListStyles.headerStyle}>
                   <img
-                    src={`http://localhost:5000/imgs/${selectedVersion.photo.filename}`}
-                    style={{ maxWidth: '200px', marginTop: '8px' }}
-                  />
-                ) : (
-                  <img
-                    src="/defaultimg.png"
+                    src={photoUrl}
                     alt="Foto del producto"
-                    style={{ maxWidth: '200px', marginTop: '8px' }}
+                    style={DPPListStyles.imageStyle}
                   />
-                )}
-
-
-
-                {/* 2. Muestra atributos sin "datasets"*/}
-                <div>
-                  <strong>Atributos (v{selectedVersion.version}):</strong>
-                  <pre>{JSON.stringify(displayedAttributes, null, 2)}</pre>
+                  <h3 style={DPPListStyles.titleStyle}>{passport.name}</h3>
+                  <select
+                    style={DPPListStyles.selectStyle}
+                    value={selectedVersion.version}
+                    onChange={(e) => {
+                      const verNum = parseInt(e.target.value, 10);
+                      const ver = passport.versions.find((v) => v.version === verNum);
+                      setSelectedVersions((prev) => ({
+                        ...prev,
+                        [passport._id]: ver,
+                      }));
+                    }}
+                  >
+                    {passport.versions.map((v) => (
+                      <option key={v.version} value={v.version}>
+                        {`v${v.version} - ${new Date(v.createdAt).toLocaleString()}`}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-                <br />
 
-                {/* 3. Sección para mostrar los datasets asociados a esta versión */}
-                {selectedVersion.datasets && selectedVersion.datasets.length > 0 && (
-                  <div>
-                    <strong>Datasets:</strong>
-                    <ul>
-                      {selectedVersion.datasets.map((ds, idx) => (
-                        <li key={idx}>
-                          {/* 
-                Suponiendo que guardas "filename" para descarga y 
-                "originalname" para mostrar el nombre real.
-              */}
-                          <a
-                            href={`http://localhost:5000/docs/${ds.filename}`}
-                            download={ds.originalname}
-                          >
-                            {ds.originalname}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                <br />
+                <div>
+                  <strong style={{ paddingLeft: '16px' }}> DPP Information (v{selectedVersion.version}):</strong>
+                  {Object.keys(attributesObj).length > 0 ? (
+                    <div style={{ marginLeft: '16px' }}>
+                      {Object.entries(attributesObj).map(([sectionName, sectionData]) => {
+                        // Extraer datasets de la sección, si existen.
+                        const { datasets: sectionDatasets, ...sectionAttributes } = sectionData;
+                        return (
+                          <div key={sectionName} style={DPPListStyles.sectionStyle}>
+                            <h4 style={{ margin: '4px 0' }}>{sectionName}</h4>    
+                            <a style={{ paddingLeft: '16px' }}>
+                              {Object.entries(sectionAttributes).map(([attrName, attrValue]) => (
+                                <li key={attrName}>
+                                  <strong>{attrName}:</strong> {attrValue}
+                                </li>
+                              ))}
+                            </a>                        
+                          
+                            {sectionDatasets && sectionDatasets.length > 0 && (
+                              <div style={{ marginLeft: '16px', marginTop: '4px' }}>
+                                <strong>Documents</strong>
+                                <a style={{ paddingLeft: '16px' }}>
+                                  {sectionDatasets.map((ds, idx) => (
+                                    <li key={idx}>
+                                      <a
+                                        href={`http://localhost:5000/docs/${ds.filename}`}
+                                        download={ds.originalname}
+                                        style={DPPListStyles.datasetLinkStyle}
+                                      >
+                                        {ds.originalname}
+                                      </a>
+                                    </li>
+                                  ))}
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p>No hay secciones.</p>
+                  )}
+                </div>
 
-                {/* Botones de Editar/Eliminar */}
-                <button onClick={() => onEdit(passport)}>Editar</button>
-                <button onClick={() => onDelete(passport._id)}>Eliminar</button>
-                <hr />
+                <div style={DPPListStyles.footerStyle}>
+                  <button onClick={() => onEdit(passport)}>Editar</button>
+                  <button onClick={() => onDelete(passport._id)}>Eliminar</button>
+                </div>
               </li>
             );
           })}

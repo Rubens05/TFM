@@ -5,27 +5,37 @@ import axios from 'axios';
 function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
   const [name, setName] = useState('');
   const [serialNumber, setSerialNumber] = useState('');
-  const [attributes, setAttributes] = useState([]); // Array de { key, value }
-  const [existingDatasets, setExistingDatasets] = useState([]); // Datasets que ya existían
-  const [selectedDatasets, setSelectedDatasets] = useState([]); // Datasets nuevos (CSV) subidos
-  const [selectedPhoto, setSelectedPhoto] = useState(null); // Imagen seleccionada
-  const [existingPhoto, setExistingPhoto] = useState(null); // Imagen existente
+  // "sections" es un array donde cada elemento es:
+  // { sectionName: string, attributes: [{ key, value }], datasets: [Object] (ya existentes), selectedDatasets: [File] (nuevos) }
+  const [sections, setSections] = useState([]);
+  const [selectedPhoto, setSelectedPhoto] = useState(null);       // Imagen nueva a subir
+  const [existingPhoto, setExistingPhoto] = useState(null);       // Imagen ya existente
 
-
+  // Al cargar initialData (modo edición), convertir el objeto de attributes en secciones.
   useEffect(() => {
     if (initialData) {
       setName(initialData.name || '');
       setSerialNumber(initialData.serialNumber || '');
-      // Suponiendo que "versions" es un array y la versión vigente es la última
+      // Suponemos que la versión vigente es la última
       const latestVersion = initialData.versions[initialData.versions.length - 1];
-      // Convertir los atributos de la versión vigente a un array (excluyendo datasets)
-      const attrArray = Object.entries(latestVersion.attributes || {})
-        .filter(([key]) => key !== 'datasets' && key !== 'photo')
-        .map(([key, value]) => ({ key, value }));
-      setAttributes(attrArray);
-      // Extraer los datasets de la versión vigente
-      setExistingDatasets(latestVersion.datasets || []);
-      // Cargar foto existente (si la hay) de la versión vigente
+      let sectionsArray = [];
+      if (latestVersion.attributes && typeof latestVersion.attributes === 'object') {
+        // Cada clave del objeto de attributes es una sección
+        sectionsArray = Object.entries(latestVersion.attributes).map(([sectionName, sectionObj]) => {
+          // Suponemos que cada sectionObj es un objeto con atributos y, opcionalmente, una propiedad "datasets"
+          const { datasets: secDatasets, ...attrObj } = sectionObj;
+          const attrArray = Object.entries(attrObj).map(([k, v]) => ({ key: k, value: v }));
+          return {
+            sectionName,
+            attributes: attrArray,
+            datasets: secDatasets || [],        // archivos ya existentes en esta sección
+            selectedDatasets: []                 // archivos nuevos (vacío al inicio)
+          };
+        });
+      }
+      setSections(sectionsArray);
+
+      // Cargar foto existente (si la hay)
       if (latestVersion.photo) {
         setExistingPhoto(latestVersion.photo);
       } else {
@@ -39,38 +49,69 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
   const clearForm = () => {
     setName('');
     setSerialNumber('');
-    setAttributes([]);
-    setSelectedDatasets([]);
-    setExistingPhoto(null);
+    setSections([]);
     setSelectedPhoto(null);
+    setExistingPhoto(null);
   };
 
-  // Añadir un nuevo atributo
-  const handleAddAttribute = () => {
-    setAttributes((prev) => [...prev, { key: '', value: '' }]);
+  // Funciones para secciones
+  const handleAddSection = () => {
+    setSections((prev) => [
+      ...prev,
+      { sectionName: '', attributes: [], datasets: [], selectedDatasets: [] }
+    ]);
   };
 
-  // Eliminar un atributo existente
-  const handleRemoveAttribute = (index) => {
-    setAttributes((prev) => prev.filter((_, i) => i !== index));
+  const handleRemoveSection = (sectionIndex) => {
+    setSections((prev) => prev.filter((_, i) => i !== sectionIndex));
   };
 
-  const handleAttributeKeyChange = (index, newKey) => {
-    const updated = [...attributes];
-    updated[index].key = newKey;
-    setAttributes(updated);
+  const handleSectionNameChange = (sectionIndex, newName) => {
+    const updated = [...sections];
+    updated[sectionIndex].sectionName = newName;
+    setSections(updated);
   };
 
-  const handleAttributeValueChange = (index, newValue) => {
-    const updated = [...attributes];
-    updated[index].value = newValue;
-    setAttributes(updated);
+  // Funciones para atributos dentro de una sección
+  const handleAddSectionAttribute = (sectionIndex) => {
+    const updated = [...sections];
+    updated[sectionIndex].attributes.push({ key: '', value: '' });
+    setSections(updated);
   };
 
-  // Para seleccionar múltiples archivos CSV
-  const handleDatasetsChange = (e) => {
+  const handleSectionAttributeKeyChange = (sectionIndex, attrIndex, newKey) => {
+    const updated = [...sections];
+    updated[sectionIndex].attributes[attrIndex].key = newKey;
+    setSections(updated);
+  };
+
+  const handleSectionAttributeValueChange = (sectionIndex, attrIndex, newValue) => {
+    const updated = [...sections];
+    updated[sectionIndex].attributes[attrIndex].value = newValue;
+    setSections(updated);
+  };
+
+  const handleRemoveSectionAttribute = (sectionIndex, attrIndex) => {
+    const updated = [...sections];
+    updated[sectionIndex].attributes = updated[sectionIndex].attributes.filter((_, i) => i !== attrIndex);
+    setSections(updated);
+  };
+
+  // Función para seleccionar archivos CSV por sección
+  const handleSectionDatasetsChange = (sectionIndex, e) => {
     if (e.target.files && e.target.files.length > 0) {
-      setSelectedDatasets(Array.from(e.target.files));
+      const filesArray = Array.from(e.target.files);
+      const updated = [...sections];
+      // Aquí reemplazamos los nuevos archivos para esa sección; si quieres acumular, puedes concatenar.
+      updated[sectionIndex].selectedDatasets = filesArray;
+      setSections(updated);
+    }
+  };
+
+  // Para seleccionar la foto (solo una)
+  const handlePhotoChange = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedPhoto(e.target.files[0]);
     }
   };
 
@@ -79,61 +120,81 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
     setExistingPhoto(null);
   };
 
+  // Permitir eliminar un dataset existente de una sección
+  const handleRemoveSectionDataset = (sectionIndex, datasetIndex) => {
+    const updated = [...sections];
+    updated[sectionIndex].datasets = updated[sectionIndex].datasets.filter((_, i) => i !== datasetIndex);
+    setSections(updated);
+  };
+
+  // Al enviar el formulario:
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
-    // 1. Validar que exista al menos un atributo
-    if (attributes.length === 0) {
-      alert("Debes añadir al menos un atributo.");
+
+    // 1. Validar que exista al menos una sección y que en cada sección haya al menos un atributo.
+    if (sections.length === 0) {
+      alert("Debes añadir al menos una sección con atributos.");
       return;
     }
-  
-    // 2. Validar que ningún atributo tenga campos vacíos
-    for (let i = 0; i < attributes.length; i++) {
-      const key = typeof attributes[i].key === 'string' ? attributes[i].key.trim() : '';
-      const value = typeof attributes[i].value === 'string' ? attributes[i].value.trim() : '';
-      if (!key || !value) {
-        alert("Todos los atributos deben tener nombre y valor.");
+    for (let i = 0; i < sections.length; i++) {
+      const sec = sections[i];
+      if (!sec.sectionName.trim()) {
+        alert("Cada sección debe tener un nombre.");
         return;
       }
-    }
-  
-    // 3. Convertir el array de atributos a objeto
-    const attributesObj = attributes.reduce((acc, curr) => {
-      acc[curr.key] = curr.value;
-      return acc;
-    }, {});
-  
-    // 4. Subir los nuevos datasets (si se seleccionaron)
-    let uploadedDatasets = [];
-    if (selectedDatasets.length > 0) {
-      const uploadPromises = selectedDatasets.map((file) => {
-        const formData = new FormData();
-        formData.append('file', file);
-        return axios.post('http://localhost:5000/api/upload/doc', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
-      });
-  
-      try {
-        const responses = await Promise.all(uploadPromises);
-        uploadedDatasets = responses.map((res) => ({
-          originalname: res.data.file.originalname,
-          encoding: res.data.file.encoding,
-          mimetype: res.data.file.mimetype,
-          size: res.data.file.size,
-          filename: res.data.file.filename,
-        }));
-      } catch (error) {
-        console.error('Error al subir los datasets:', error);
+      if (sec.attributes.length === 0) {
+        alert(`La sección "${sec.sectionName}" debe tener al menos un atributo.`);
+        return;
+      }
+      for (let j = 0; j < sec.attributes.length; j++) {
+        const key = typeof sec.attributes[j].key === 'string' ? sec.attributes[j].key.trim() : '';
+        const value = typeof sec.attributes[j].value === 'string' ? sec.attributes[j].value.trim() : '';
+        if (!key || !value) {
+          alert(`Todos los atributos en la sección "${sec.sectionName}" deben tener nombre y valor.`);
+          return;
+        }
       }
     }
-  
-    // 5. Combinar los datasets: los existentes (después de quitar los que se eliminaron)
-    //    y los nuevos subidos.
-    const finalDatasets = [...existingDatasets, ...uploadedDatasets];
-  
-    // 6. Subir la imagen si se seleccionó; si no, conservar la foto existente (si hay)
+
+    // 2. Procesar cada sección: subir los nuevos archivos y combinar con los ya existentes.
+    let sectionsToSend = {}; // Este objeto tendrá, para cada sección, los atributos y sus datasets.
+    for (let i = 0; i < sections.length; i++) {
+      const sec = sections[i];
+      let uploadedSectionDatasets = [];
+      if (sec.selectedDatasets && sec.selectedDatasets.length > 0) {
+        const uploadPromises = sec.selectedDatasets.map((file) => {
+          const formData = new FormData();
+          formData.append('file', file);
+          return axios.post('http://localhost:5000/api/upload/doc', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          });
+        });
+        try {
+          const responses = await Promise.all(uploadPromises);
+          uploadedSectionDatasets = responses.map((res) => ({
+            originalname: res.data.file.originalname,
+            encoding: res.data.file.encoding,
+            mimetype: res.data.file.mimetype,
+            size: res.data.file.size,
+            filename: res.data.file.filename,
+          }));
+        } catch (error) {
+          console.error('Error al subir los archivos de la sección:', error);
+        }
+      }
+      // Combinar los datasets existentes de la sección con los nuevos subidos
+      const finalSectionDatasets = [...sec.datasets, ...uploadedSectionDatasets];
+      // Convertir el array de atributos a objeto para esta sección
+      const attrObj = sec.attributes.reduce((obj, attr) => {
+        obj[attr.key] = attr.value;
+        return obj;
+      }, {});
+      // Añadir también la propiedad "datasets" dentro de la sección para enviarlo
+      attrObj.datasets = finalSectionDatasets;
+      sectionsToSend[sec.sectionName] = attrObj;
+    }
+
+    // 3. Procesar la foto global:
     let uploadedImage = null;
     if (selectedPhoto) {
       const imageFormData = new FormData();
@@ -155,63 +216,35 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
     } else if (existingPhoto) {
       uploadedImage = existingPhoto;
     }
-  
-    // 7. En modo edición, comparar con la última versión para ver si hay cambios
+
+    // 4. Si estamos en modo edición, comparar con la última versión para ver si hay cambios.
     if (editingId && initialData) {
       const latestVersion = initialData.versions[initialData.versions.length - 1];
-  
-      // Comparar el campo attributes, ignorando datasets y foto
-      const initialAttributes = Object.entries(latestVersion.attributes || {})
-        .filter(([key]) => key !== 'datasets' && key !== 'photo')
-        .map(([key, value]) => ({ key, value }));
-      const hasAttributeChanges = JSON.stringify(initialAttributes) !== JSON.stringify(attributes);
-
-    
-      
-      // Detectar si se han añadido nuevos atributos
-      const initialAttrKeys = Object.keys(latestVersion.attributes || {});
-      const currentAttrKeys = Object.keys(attributesObj);
-      const hasNewAttributes = currentAttrKeys.length > initialAttrKeys.length;
-      
-      // Comparar foto: se considera cambio si se seleccionó una nueva foto o si había foto y ahora se quitó
+      // Comparar atributos (secciones): suponemos que la última versión almacena "attributes" en el mismo formato.
+      const hasAttributeChanges =
+        JSON.stringify(latestVersion.attributes) !== JSON.stringify(sectionsToSend);
+      // Para la foto:
       const initialPhoto = latestVersion.photo || null;
       const hasPhotoChanges = !!selectedPhoto || (initialPhoto && !existingPhoto);
+      // Para los datasets, ahora están incluidos en cada sección dentro de attributes.
+      // Si la comparación de attributes falla, se consideran cambios.
       
-      // Comparar datasets: se compara el array final de datasets con el de la última versión
-      const hasDatasetChanges =
-        JSON.stringify(latestVersion.datasets) !== JSON.stringify(finalDatasets);
-  
-      if (!hasAttributeChanges && !hasNewAttributes && !hasPhotoChanges && !hasDatasetChanges) {
+      if (!hasAttributeChanges && !hasPhotoChanges) {
         alert('No se detectaron cambios en el DPP.');
         return;
       }
     }
-  
-    // 8. Incluir los datasets y la foto en el objeto de atributos (opcional)
-    attributesObj.datasets = finalDatasets;
-    attributesObj.photo = uploadedImage;
-  
-    // 9. Armar el objeto final a enviar
+
+    // 5. Armar el objeto final a enviar
     const formDataToSend = {
       name,
       serialNumber,
-      attributes: attributesObj,
-      datasets: finalDatasets,
+      attributes: sectionsToSend,
       photo: uploadedImage,
     };
-  
-    // 10. Enviar el formulario y limpiar el formulario local
+
     onSubmit(formDataToSend);
     clearForm();
-  };
-  
-
-
-  // Controlar que solo se pueda seleccionar una foto
-  const handlePhotoChange = (e) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setSelectedPhoto(e.target.files[0]);
-    }
   };
 
   return (
@@ -224,7 +257,7 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
           onChange={(e) => setName(e.target.value)}
           required
           style={{ width: '100%', marginTop: '4px' }}
-          disabled={!!editingId} // Si se quiere bloquear la edición del nombre
+          disabled={!!editingId}
         />
       </div>
       <div style={{ marginBottom: '8px' }}>
@@ -235,48 +268,87 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
           onChange={(e) => setSerialNumber(e.target.value)}
           required
           style={{ width: '100%', marginTop: '4px' }}
-          disabled={!!editingId} // Bloqueado si se edita
+          disabled={!!editingId}
         />
       </div>
-      <h3>Atributos</h3>
-      {attributes.map((attr, index) => (
-        <div key={index} style={{ marginBottom: '8px' }}>
-          <label>Atributo {index + 1}</label>
-          <div style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
+      
+      {/* Secciones de atributos */}
+      <h3>Secciones de Atributos</h3>
+      {sections.map((section, sIndex) => (
+        <div key={sIndex} style={{ border: '1px solid #ccc', padding: '8px', marginBottom: '8px' }}>
+          <label>Nombre de la Sección:</label>
+          <input
+            type="text"
+            value={section.sectionName}
+            onChange={(e) => handleSectionNameChange(sIndex, e.target.value)}
+            placeholder="Ej. Origen"
+            required
+          />
+          <h4>Atributos en {section.sectionName || 'Nueva Sección'}</h4>
+          {section.attributes.map((attr, aIndex) => (
+            <div key={aIndex} style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
+              <input
+                type="text"
+                placeholder="Nombre (ej. color)"
+                value={attr.key}
+                required
+                onChange={(e) => handleSectionAttributeKeyChange(sIndex, aIndex, e.target.value)}
+                style={{ flex: '1' }}
+              />
+              <input
+                type="text"
+                placeholder="Valor (ej. rojo)"
+                value={attr.value}
+                required
+                onChange={(e) => handleSectionAttributeValueChange(sIndex, aIndex, e.target.value)}
+                style={{ flex: '1' }}
+              />
+              <button type="button" onClick={() => handleRemoveSectionAttribute(sIndex, aIndex)}>
+                Eliminar atributo
+              </button>
+            </div>
+          ))}
+          <button type="button" onClick={() => handleAddSectionAttribute(sIndex)}>
+            Añadir atributo
+          </button>
+          <br />
+          <h4>Documentos de la sección "{section.sectionName}"</h4>
+          {/* Mostrar archivos ya existentes para esta sección */}
+          {section.datasets && section.datasets.length > 0 && (
+            <div>
+              {section.datasets.map((ds, idx) => (
+                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>{ds.originalname}</span>
+                  <button type="button" onClick={() => handleRemoveSectionDataset(sIndex, idx)}>
+                    Quitar documento
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <div style={{ marginBottom: '8px' }}>
+            <label>Subir Documento(s) para esta sección</label>
+            <br />
             <input
-              type="text"
-              placeholder="Nombre (ej. color)"
-              value={attr.key}
-              required
-              onChange={(e) => handleAttributeKeyChange(index, e.target.value)}
-              style={{ flex: '1' }}
+              type="file"
+              accept=".csv"
+              multiple
+              onChange={(e) => handleSectionDatasetsChange(sIndex, e)}
             />
-            <input
-              type="text"
-              placeholder="Valor (ej. rojo)"
-              value={attr.value}
-              required
-              onChange={(e) => handleAttributeValueChange(index, e.target.value)}
-              style={{ flex: '1' }}
-            />
-            <button type="button" onClick={() => handleRemoveAttribute(index)}>
-              Eliminar
-            </button>
           </div>
-
+          <button type="button" onClick={() => handleRemoveSection(sIndex)}>
+            Eliminar sección
+          </button>
         </div>
-
-
       ))}
-      <button type="button" onClick={handleAddAttribute}>
-        Añadir atributo
+      <button type="button" onClick={handleAddSection}>
+        Añadir Sección
       </button>
 
       <h3>Foto (opcional)</h3>
       <div style={{ marginBottom: '8px' }}>
         <input type="file" accept="image/*" onChange={handlePhotoChange} />
       </div>
-      {/* Mostrar la foto existente, con opción de quitar */}
       {existingPhoto && (
         <div style={{ marginBottom: '8px' }}>
           <strong>Foto existente:</strong>
@@ -288,32 +360,6 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
           </div>
         </div>
       )}
-
-      <h3>Datasets</h3>
-
-      {/* Mostrar datasets existentes con opción de quitar solo si se está editando */}
-
-      {existingDatasets.length > 0 && (
-        <div style={{ marginBottom: '8px' }}>
-          <strong>Datasets existentes:</strong>
-          {existingDatasets.map((ds, idx) => (
-            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>{ds.originalname}</span>
-              <button type="button" onClick={() => setExistingDatasets(prev => prev.filter((_, i) => i !== idx))}>
-                Quitar
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div style={{ marginBottom: '8px' }}>
-        <label>Subir Dataset(s) CSV</label>
-        <br />
-        <small>Seleccione uno o más archivos CSV</small>
-        <br />
-        <input type="file" accept=".csv" multiple onChange={handleDatasetsChange} />
-      </div>
 
       <div style={{ marginTop: '16px' }}>
         <button type="submit">{editingId ? 'Actualizar DPP' : 'Crear DPP'}</button>

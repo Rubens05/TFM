@@ -7,10 +7,14 @@ const fs = require('fs');
 const path = require('path');
 
 // Crear un nuevo DPP (versión 1)
+// Se espera que "attributes" venga como objeto de secciones,
+// por ejemplo: { Origen: { pais: "España", ciudad: "Madrid", datasets: [...] }, Logística: { transporte: "Camión", datasets: [...] } }
 router.post('/', async (req, res) => {
   try {
-    const { name, serialNumber, attributes, datasets, photo } = req.body;
-    console.log(req.body);
+    const { name, attributes, datasets, photo } = req.body;
+    console.log("POST /api/passports - req.body:", req.body);
+    // En este nuevo formato, se asume que los datasets pueden estar incluidos dentro de cada sección;
+    // Si además se envía un array datasets global, se usará para la versión global.
     const initialDatasets = datasets || [];
     const initialPhoto = photo || null;
     const initialVersion = {
@@ -21,11 +25,8 @@ router.post('/', async (req, res) => {
     };
     const newPassport = new Passport({
       name,
-      serialNumber,
       currentAttributes: attributes,
       versions: [initialVersion],
-      datasets: initialDatasets,
-      photo: initialPhoto,
     });
     await newPassport.save();
     return res.status(201).json(newPassport);
@@ -34,45 +35,34 @@ router.post('/', async (req, res) => {
   }
 });
 
-
-
 // Actualizar (editar) un DPP: se añade una nueva versión
 router.put('/:id', async (req, res) => {
   try {
     const { attributes, datasets, photo } = req.body;
-    // "datasets" es el array final (sin los que se quitaron y con los que se añadieron)
-
+    // "attributes" es el objeto final con secciones.
+    // "datasets" es el array global final (si se usa) y
+    // "photo" es el objeto de la foto a utilizar (puede ser null).
     const passport = await Passport.findById(req.params.id);
     if (!passport) {
       return res.status(404).json({ error: 'DPP no encontrado' });
     }
 
-    // Actualiza atributos actuales
+    // Actualizar currentAttributes
     passport.currentAttributes = attributes;
+    // En este ejemplo, la foto se guarda por versión, así que no se actualiza globalmente
 
-    // Actualiza la foto de la versión actual
-    if (photo) {
-      console.log(photo);
-
-      passport.photo = photo;
-    }
-
-    // Crea la nueva versión
+    // Crear la nueva versión
     const newVersionNumber = passport.versions.length + 1;
     const newVersion = {
       version: newVersionNumber,
       attributes: attributes,
-      datasets: datasets || [], // uso literal del array que llega
+      datasets: datasets || [],
       photo: photo || null,
       createdAt: new Date()
     };
 
-    // Insertar la nueva versión al final
+    // Insertar la nueva versión
     passport.versions.push(newVersion);
-
-    // (Opcional) Si usabas un passport.datasets global, puedes quitarlo 
-    // o setearlo a lo que quieras, pero ya NO hagas merges con lo viejo
-    // passport.datasets = datasets; // si tu schema lo requiere
 
     await passport.save();
     return res.status(200).json(passport);
@@ -80,7 +70,6 @@ router.put('/:id', async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 });
-
 
 // Obtener todos los DPPs
 router.get('/', async (req, res) => {
@@ -92,7 +81,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Eliminar un DPP, sus datasets y fotos 
+// Eliminar un DPP, sus datasets y fotos
+// Se asume que los archivos de datasets se almacenan en "../docs" y las imágenes en "../imgs"
 router.delete('/:id', async (req, res) => {
   try {
     const passport = await Passport.findById(req.params.id);
@@ -100,22 +90,42 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ error: 'DPP no encontrado' });
     }
 
-    // Recorrer cada versión y cada dataset para eliminar el archivo de forma síncrona
+    // Recorrer cada versión y eliminar archivos asociados
     for (const version of passport.versions) {
-      // Eliminar los archivos de cada dataset
-      for (const ds of version.datasets) {
-        const filePath = path.join(__dirname, '../docs', ds.filename);
-        if (fs.existsSync(filePath)) {
-          try {
-            await fs.promises.unlink(filePath);
-            console.log(`Archivo eliminado: ${filePath}`);
-          } catch (err) {
-            console.error(`Error eliminando archivo: ${filePath}`, err);
+      // 1. Eliminar archivos del array global de datasets (si existe)
+      if (version.datasets && Array.isArray(version.datasets)) {
+        for (const ds of version.datasets) {
+          const filePath = path.join(__dirname, '../docs', ds.filename);
+          if (fs.existsSync(filePath)) {
+            try {
+              await fs.promises.unlink(filePath);
+              console.log(`Archivo eliminado: ${filePath}`);
+            } catch (err) {
+              console.error(`Error eliminando archivo: ${filePath}`, err);
+            }
           }
         }
       }
-
-      // Eliminar la foto de la versión
+      // 2. Recorrer cada sección en attributes y, si la sección tiene propiedad "datasets", eliminar esos archivos
+      if (version.attributes && typeof version.attributes === 'object') {
+        for (const sectionKey of Object.keys(version.attributes)) {
+          const section = version.attributes[sectionKey];
+          if (section.datasets && Array.isArray(section.datasets)) {
+            for (const ds of section.datasets) {
+              const filePath = path.join(__dirname, '../docs', ds.filename);
+              if (fs.existsSync(filePath)) {
+                try {
+                  await fs.promises.unlink(filePath);
+                  console.log(`Archivo eliminado en sección "${sectionKey}": ${filePath}`);
+                } catch (err) {
+                  console.error(`Error eliminando archivo en sección "${sectionKey}": ${filePath}`, err);
+                }
+              }
+            }
+          }
+        }
+      }
+      // 3. Eliminar la foto (si existe)
       if (version.photo) {
         const photoPath = path.join(__dirname, '../imgs', version.photo.filename);
         if (fs.existsSync(photoPath)) {
@@ -127,10 +137,9 @@ router.delete('/:id', async (req, res) => {
           }
         }
       }
-
     }
 
-    // Eliminar el documento después de borrar los archivos
+    // Finalmente, eliminar el documento de MongoDB
     await Passport.findByIdAndDelete(req.params.id);
     return res.status(200).json({ message: 'Passport y archivos asociados eliminados' });
   } catch (error) {
