@@ -1,0 +1,3 @@
+[submodule "Blockchain/hyperledger_besu_network"]
+	path = Blockchain/hyperledger_besu_network
+	url = https://github.com/funditec-cybersecurity/hyperledger-besu-network.git
