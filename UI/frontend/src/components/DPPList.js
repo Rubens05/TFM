@@ -5,9 +5,9 @@ import DPPListStyles from './DPPListStyles';
 function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onDelete }) {
   return (
     <div>
-      <h2>Lista de DPPs</h2>
+      <h2>DPP List</h2>
       {passports.length === 0 ? (
-        <p>No hay DPPs creados todavía.</p>
+        <p> No DPPs found. </p>
       ) : (
         <ul style={{ listStyle: 'none', padding: 0 }}>
           {passports.map((passport) => {
@@ -26,7 +26,7 @@ function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onD
                 <div style={DPPListStyles.headerStyle}>
                   <img
                     src={photoUrl}
-                    alt="Foto del producto"
+                    alt="Product image"
                     style={DPPListStyles.imageStyle}
                   />
                   <h3 style={DPPListStyles.titleStyle}>{passport.name}</h3>
@@ -51,7 +51,7 @@ function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onD
                 </div>
 
                 <div>
-                  <strong style={{ paddingLeft: '16px' }}> DPP Information (v{selectedVersion.version}):</strong>
+                  <strong style={{ paddingLeft: '16px' }}> {passport.name} Information (v{selectedVersion.version}):</strong>
                   {Object.keys(attributesObj).length > 0 ? (
                     <div style={{ marginLeft: '16px' }}>
                       {Object.entries(attributesObj).map(([sectionName, sectionData]) => {
@@ -59,7 +59,7 @@ function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onD
                         const { datasets: sectionDatasets, ...sectionAttributes } = sectionData;
                         return (
                           <div key={sectionName} style={DPPListStyles.sectionStyle}>
-                            <h4 style={{ margin: '4px 0' }}>{sectionName}</h4>    
+                            <h4 style={{ margin: '4px 0' }}>{sectionName} Section</h4>    
                             <a style={{ paddingLeft: '16px' }}>
                               {Object.entries(sectionAttributes).map(([attrName, attrValue]) => (
                                 <li key={attrName}>
@@ -91,13 +91,13 @@ function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onD
                       })}
                     </div>
                   ) : (
-                    <p>No hay secciones.</p>
+                    <p> No section data available for this version. </p>
                   )}
                 </div>
 
                 <div style={DPPListStyles.footerStyle}>
-                  <button onClick={() => onEdit(passport)}>Editar</button>
-                  <button onClick={() => onDelete(passport._id)}>Eliminar</button>
+                  <button onClick={() => onEdit(passport)}>Edit</button>
+                  <button onClick={() => onDelete(passport._id)}>Delete</button>
                 </div>
               </li>
             );

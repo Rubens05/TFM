@@ -60,7 +60,14 @@ function App() {
   };
 
   return (
-    <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+    
+    <div style={{ maxWidth: '600px', margin: '0 auto' }}> 
+      {/*Funditec image*/}
+      <img
+        src="funditec.png"
+        alt="Funditec Logo"
+        style={{ width: '100%', height: 'auto', marginBottom: '20px' }}
+      />
       <h1>Digital Product Passport</h1>
       {editingId ? (
         <DPPForm

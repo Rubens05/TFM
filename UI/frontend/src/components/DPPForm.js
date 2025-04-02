@@ -4,7 +4,6 @@ import axios from 'axios';
 
 function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
   const [name, setName] = useState('');
-  const [serialNumber, setSerialNumber] = useState('');
   // "sections" es un array donde cada elemento es:
   // { sectionName: string, attributes: [{ key, value }], datasets: [Object] (ya existentes), selectedDatasets: [File] (nuevos) }
   const [sections, setSections] = useState([]);
@@ -15,7 +14,6 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
   useEffect(() => {
     if (initialData) {
       setName(initialData.name || '');
-      setSerialNumber(initialData.serialNumber || '');
       // Suponemos que la versión vigente es la última
       const latestVersion = initialData.versions[initialData.versions.length - 1];
       let sectionsArray = [];
@@ -48,7 +46,6 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
 
   const clearForm = () => {
     setName('');
-    setSerialNumber('');
     setSections([]);
     setSelectedPhoto(null);
     setExistingPhoto(null);
@@ -238,7 +235,6 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
     // 5. Armar el objeto final a enviar
     const formDataToSend = {
       name,
-      serialNumber,
       attributes: sectionsToSend,
       photo: uploadedImage,
     };
@@ -250,7 +246,7 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
   return (
     <form onSubmit={handleSubmit}>
       <div style={{ marginBottom: '8px' }}>
-        <label>Nombre del Producto</label>
+        <label>Product Name</label>
         <input
           type="text"
           value={name}
@@ -260,36 +256,25 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
           disabled={!!editingId}
         />
       </div>
-      <div style={{ marginBottom: '8px' }}>
-        <label>Número de Serie</label>
-        <input
-          type="text"
-          value={serialNumber}
-          onChange={(e) => setSerialNumber(e.target.value)}
-          required
-          style={{ width: '100%', marginTop: '4px' }}
-          disabled={!!editingId}
-        />
-      </div>
       
       {/* Secciones de atributos */}
-      <h3>Secciones de Atributos</h3>
+      <h3>Sections</h3>
       {sections.map((section, sIndex) => (
         <div key={sIndex} style={{ border: '1px solid #ccc', padding: '8px', marginBottom: '8px' }}>
-          <label>Nombre de la Sección:</label>
+          <label>Section Name: </label>
           <input
             type="text"
             value={section.sectionName}
             onChange={(e) => handleSectionNameChange(sIndex, e.target.value)}
-            placeholder="Ej. Origen"
+            placeholder="e.g. Origin"
             required
           />
-          <h4>Atributos en {section.sectionName || 'Nueva Sección'}</h4>
+          <h4>Attributes in {section.sectionName || 'Section Name'}</h4>
           {section.attributes.map((attr, aIndex) => (
             <div key={aIndex} style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
               <input
                 type="text"
-                placeholder="Nombre (ej. color)"
+                placeholder="Name (e.g. Colour)"
                 value={attr.key}
                 required
                 onChange={(e) => handleSectionAttributeKeyChange(sIndex, aIndex, e.target.value)}
@@ -297,22 +282,22 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
               />
               <input
                 type="text"
-                placeholder="Valor (ej. rojo)"
+                placeholder="Value (e.g. Red)"
                 value={attr.value}
                 required
                 onChange={(e) => handleSectionAttributeValueChange(sIndex, aIndex, e.target.value)}
                 style={{ flex: '1' }}
               />
               <button type="button" onClick={() => handleRemoveSectionAttribute(sIndex, aIndex)}>
-                Eliminar atributo
+                Delete attribute
               </button>
             </div>
           ))}
           <button type="button" onClick={() => handleAddSectionAttribute(sIndex)}>
-            Añadir atributo
+            Add attribute
           </button>
           <br />
-          <h4>Documentos de la sección "{section.sectionName}"</h4>
+          <h4>Documents of section "{section.sectionName}"</h4>
           {/* Mostrar archivos ya existentes para esta sección */}
           {section.datasets && section.datasets.length > 0 && (
             <div>
@@ -320,14 +305,14 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
                 <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span>{ds.originalname}</span>
                   <button type="button" onClick={() => handleRemoveSectionDataset(sIndex, idx)}>
-                    Quitar documento
+                    Remove Document
                   </button>
                 </div>
               ))}
             </div>
           )}
           <div style={{ marginBottom: '8px' }}>
-            <label>Subir Documento(s) para esta sección</label>
+            <label>Upload new documents (CSV)</label>
             <br />
             <input
               type="file"
@@ -337,35 +322,35 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
             />
           </div>
           <button type="button" onClick={() => handleRemoveSection(sIndex)}>
-            Eliminar sección
+            Delete Section
           </button>
         </div>
       ))}
       <button type="button" onClick={handleAddSection}>
-        Añadir Sección
+        Add Section
       </button>
 
-      <h3>Foto (opcional)</h3>
+      <h3>Image (optional)</h3>
       <div style={{ marginBottom: '8px' }}>
         <input type="file" accept="image/*" onChange={handlePhotoChange} />
       </div>
       {existingPhoto && (
         <div style={{ marginBottom: '8px' }}>
-          <strong>Foto existente:</strong>
+          <strong> Existing Image:</strong>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span>{existingPhoto.originalname}</span>
             <button type="button" onClick={handleRemoveExistingPhoto}>
-              Quitar foto
+              Remove Image
             </button>
           </div>
         </div>
       )}
 
       <div style={{ marginTop: '16px' }}>
-        <button type="submit">{editingId ? 'Actualizar DPP' : 'Crear DPP'}</button>
+        <button type="submit">{editingId ? 'Update DPP' : 'Create DPP'}</button>
         {editingId && (
           <button type="button" onClick={onCancel}>
-            Cancelar edición
+            Cancel Edit
           </button>
         )}
       </div>
