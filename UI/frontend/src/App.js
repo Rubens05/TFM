@@ -3,12 +3,15 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import DPPForm from './components/DPPForm';
 import DPPList from './components/DPPList';
+import { FaTrash, FaEdit, FaPlus, FaTimes } from 'react-icons/fa';
+
 
 function App() {
   const [passports, setPassports] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [selectedVersions, setSelectedVersions] = useState({});
   const [initialFormData, setInitialFormData] = useState(null);
+  const [isCreating, setIsCreating] = useState(false);
 
   const fetchPassports = async () => {
     try {
@@ -60,16 +63,56 @@ function App() {
   };
 
   return (
-    
-    <div style={{ maxWidth: '600px', margin: '0 auto' }}> 
+
+    <div style={{ maxWidth: '600px', margin: '0 auto' }}>
       {/*Funditec image*/}
       <img
         src="funditec.png"
         alt="Funditec Logo"
         style={{ width: '100%', height: 'auto', marginBottom: '20px' }}
       />
-      <h1>Digital Product Passport</h1>
-      {editingId ? (
+      {/* Display del titulo DPP y al lado el boton de crear */}
+      <h1 style={{ display: 'inline-block', marginRight: '90px' }}>Digital Product Passport</h1>
+
+      {/* Botón para crear un nuevo DPP, al pulsarlo cambia a cancelar creación*/}
+      <button
+        onClick={() => {
+          setEditingId(null);
+          setIsCreating(!isCreating);
+          setInitialFormData(isCreating ? null : { name: '', description: '' });
+        }
+        }
+        style={{
+          backgroundColor: isCreating ? 'red' : 'green',
+          color: 'white',
+          padding: '10px 20px',
+          border: 'none',
+          borderRadius: '5px',
+          cursor: 'pointer',
+          marginLeft: '30px',
+          fontSize: '16px',
+          fontWeight: 'bold',
+          transition: 'background-color 0.3s',
+          display: 'inline-block',
+          textAlign: 'center',
+          textDecoration: 'none',
+          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+
+        }}
+      >
+        {isCreating ? 'Cancel DPP' : 'Create DPP'}
+      </button>
+
+      {/* Mostrar el formulario solo si se ha pulsado editar o crear*/}
+      {(isCreating) && (
+        <DPPForm
+          initialFormData={initialFormData}
+          onSubmit={handleFormSubmit}
+          onCancel={handleCancelEdit}
+        />
+      )}
+      {/* Mostrar el formulario solo si se ha pulsado editar */}
+      {(editingId && !isCreating) && (
         <DPPForm
           key={editingId} // << forzamos re-montaje cuando cambia editingId
           editingId={editingId}
@@ -77,12 +120,9 @@ function App() {
           onSubmit={handleFormSubmit}
           onCancel={handleCancelEdit}
         />
-      ) : (
-        <DPPForm
-          key="new" // << para el formulario de creación
-          onSubmit={handleFormSubmit}
-        />
       )}
+      {/* Mostrar la lista de DPPs */}
+
       <hr />
       <DPPList
         passports={passports}

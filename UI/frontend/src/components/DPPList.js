@@ -1,6 +1,6 @@
 // client/src/components/DPPList.js
 import React from 'react';
-import DPPListStyles from './DPPListStyles';
+import Styles from './Styles';
 
 function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onDelete }) {
   return (
@@ -22,16 +22,16 @@ function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onD
               : '/defaultimg.png';
 
             return (
-              <li key={passport._id} style={DPPListStyles.cardStyle}>
-                <div style={DPPListStyles.headerStyle}>
+              <li key={passport._id} style={Styles.cardStyle}>
+                <div style={Styles.headerStyle}>
                   <img
                     src={photoUrl}
                     alt="Product image"
-                    style={DPPListStyles.imageStyle}
+                    style={Styles.imageStyle}
                   />
-                  <h3 style={DPPListStyles.titleStyle}>{passport.name}</h3>
+                  <h3 style={Styles.titleStyle}>{passport.name}</h3>
                   <select
-                    style={DPPListStyles.selectStyle}
+                    style={Styles.selectStyle}
                     value={selectedVersion.version}
                     onChange={(e) => {
                       const verNum = parseInt(e.target.value, 10);
@@ -58,16 +58,16 @@ function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onD
                         // Extraer datasets de la sección, si existen.
                         const { datasets: sectionDatasets, ...sectionAttributes } = sectionData;
                         return (
-                          <div key={sectionName} style={DPPListStyles.sectionStyle}>
-                            <h4 style={{ margin: '4px 0' }}>{sectionName} Section</h4>    
+                          <div key={sectionName} style={Styles.sectionStyle}>
+                            <h4 style={{ margin: '4px 0' }}>{sectionName} Section</h4>
                             <a style={{ paddingLeft: '16px' }}>
                               {Object.entries(sectionAttributes).map(([attrName, attrValue]) => (
                                 <li key={attrName}>
                                   <strong>{attrName}:</strong> {attrValue}
                                 </li>
                               ))}
-                            </a>                        
-                          
+                            </a>
+
                             {sectionDatasets && sectionDatasets.length > 0 && (
                               <div style={{ marginLeft: '16px', marginTop: '4px' }}>
                                 <strong>Documents</strong>
@@ -77,7 +77,7 @@ function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onD
                                       <a
                                         href={`http://localhost:5000/docs/${ds.filename}`}
                                         download={ds.originalname}
-                                        style={DPPListStyles.datasetLinkStyle}
+                                        style={Styles.datasetLinkStyle}
                                       >
                                         {ds.originalname}
                                       </a>
@@ -95,9 +95,41 @@ function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onD
                   )}
                 </div>
 
-                <div style={DPPListStyles.footerStyle}>
-                  <button onClick={() => onEdit(passport)}>Edit</button>
-                  <button onClick={() => onDelete(passport._id)}>Delete</button>
+                <div style={Styles.footerStyle}>
+                  <button onClick={() => onEdit(passport)}
+                    style={{
+                      backgroundColor: 'grey',
+                      color: 'white',
+                      padding: '10px 20px',
+                      border: 'none',
+                      borderRadius: '5px',
+                      cursor: 'pointer',
+                      marginLeft: '10px',
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      transition: 'background-color 0.3s',
+                      display: 'inline-block',
+                      textAlign: 'center',
+                      textDecoration: 'none',
+                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+                    }}>Edit</button>
+                  <button onClick={() => onDelete(passport._id)}
+                    style={{
+                      backgroundColor: 'red',
+                      color: 'white',
+                      padding: '10px 20px',
+                      border: 'none',
+                      borderRadius: '5px',
+                      cursor: 'pointer',
+                      marginLeft: '10px',
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      transition: 'background-color 0.3s',
+                      display: 'inline-block',
+                      textAlign: 'center',
+                      textDecoration: 'none',
+                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+                    }}>Delete</button>
                 </div>
               </li>
             );

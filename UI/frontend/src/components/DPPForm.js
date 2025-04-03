@@ -1,6 +1,8 @@
 // client/src/components/DPPForm.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import Styles from './Styles';
+import { FaTrash, FaEdit, FaPlus, FaTimes } from 'react-icons/fa';
 
 function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
   const [name, setName] = useState('');
@@ -225,7 +227,7 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
       const hasPhotoChanges = !!selectedPhoto || (initialPhoto && !existingPhoto);
       // Para los datasets, ahora están incluidos en cada sección dentro de attributes.
       // Si la comparación de attributes falla, se consideran cambios.
-      
+
       if (!hasAttributeChanges && !hasPhotoChanges) {
         alert('No se detectaron cambios en el DPP.');
         return;
@@ -244,31 +246,42 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div style={{ marginBottom: '8px' }}>
-        <label>Product Name</label>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-          style={{ width: '100%', marginTop: '4px' }}
-          disabled={!!editingId}
-        />
+    <form onSubmit={handleSubmit} style={Styles.formStyle}>
+      <div>
+        <h3>Product Name</h3>
       </div>
-      
+      <input
+        type="text"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        required
+        disabled={!!editingId}
+        style={Styles.inputStyle}
+      />
+
       {/* Secciones de atributos */}
       <h3>Sections</h3>
       {sections.map((section, sIndex) => (
-        <div key={sIndex} style={{ border: '1px solid #ccc', padding: '8px', marginBottom: '8px' }}>
-          <label>Section Name: </label>
+
+        <div key={sIndex} style={Styles.sectionBox}>
+
+          <label>Section Name:</label>
+
           <input
             type="text"
             value={section.sectionName}
             onChange={(e) => handleSectionNameChange(sIndex, e.target.value)}
             placeholder="e.g. Origin"
             required
+            style={Styles.inputStyle}
           />
+          {/* Botón para eliminar la sección a la derecha */}
+          <button type="button" onClick={() => handleRemoveSection(sIndex)} style={Styles.dangerButton}
+            title="Remove Section"
+          >
+            <FaTrash />
+          </button>
+
           <h4>Attributes in {section.sectionName || 'Section Name'}</h4>
           {section.attributes.map((attr, aIndex) => (
             <div key={aIndex} style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
@@ -278,7 +291,7 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
                 value={attr.key}
                 required
                 onChange={(e) => handleSectionAttributeKeyChange(sIndex, aIndex, e.target.value)}
-                style={{ flex: '1' }}
+                style={Styles.inputStyle}
               />
               <input
                 type="text"
@@ -286,15 +299,17 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
                 value={attr.value}
                 required
                 onChange={(e) => handleSectionAttributeValueChange(sIndex, aIndex, e.target.value)}
-                style={{ flex: '1' }}
+                style={Styles.inputStyle}
               />
-              <button type="button" onClick={() => handleRemoveSectionAttribute(sIndex, aIndex)}>
-                Delete attribute
+              <button type="button" onClick={() => handleRemoveSectionAttribute(sIndex, aIndex)} style={Styles.dangerButton}
+                title='Remove Attribute'>
+                <FaTrash />
               </button>
             </div>
           ))}
-          <button type="button" onClick={() => handleAddSectionAttribute(sIndex)}>
-            Add attribute
+          <button type="button" onClick={() => handleAddSectionAttribute(sIndex)} style={Styles.secondaryButton}
+            title='Add Attribute'>
+            <FaPlus />
           </button>
           <br />
           <h4>Documents of section "{section.sectionName}"</h4>
@@ -304,8 +319,8 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
               {section.datasets.map((ds, idx) => (
                 <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span>{ds.originalname}</span>
-                  <button type="button" onClick={() => handleRemoveSectionDataset(sIndex, idx)}>
-                    Remove Document
+                  <button type="button" onClick={() => handleRemoveSectionDataset(sIndex, idx)} style={Styles.dangerButton}>
+                    <FaTrash />
                   </button>
                 </div>
               ))}
@@ -319,19 +334,18 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
               accept=".csv"
               multiple
               onChange={(e) => handleSectionDatasetsChange(sIndex, e)}
+              style={Styles.sectionBox}
             />
           </div>
-          <button type="button" onClick={() => handleRemoveSection(sIndex)}>
-            Delete Section
-          </button>
+
         </div>
       ))}
-      <button type="button" onClick={handleAddSection}>
+      <button type="button" onClick={handleAddSection} style={Styles.secondaryButton}>
         Add Section
       </button>
 
       <h3>Image (optional)</h3>
-      <div style={{ marginBottom: '8px' }}>
+      <div style={Styles.sectionBox}>
         <input type="file" accept="image/*" onChange={handlePhotoChange} />
       </div>
       {existingPhoto && (
@@ -339,17 +353,22 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
           <strong> Existing Image:</strong>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span>{existingPhoto.originalname}</span>
-            <button type="button" onClick={handleRemoveExistingPhoto}>
-              Remove Image
+            <button type="button" onClick={handleRemoveExistingPhoto} style={Styles.dangerButton}
+              title='Remove Existing Image'>
+              <FaTrash />
             </button>
           </div>
         </div>
       )}
 
       <div style={{ marginTop: '16px' }}>
-        <button type="submit">{editingId ? 'Update DPP' : 'Create DPP'}</button>
+        <button type="submit" style={Styles.buttonStyle} title='Save'>{editingId ? 'Update DPP' : 'Create DPP'}</button>
+
         {editingId && (
-          <button type="button" onClick={onCancel}>
+          <button type="button" onClick={onCancel} style={Styles.secondaryButton}
+            title='Cancel Edit'>
+            {/* Icono de cancelar */}
+            <FaTimes />  {/* Icono de cancelar */}
             Cancel Edit
           </button>
         )}
