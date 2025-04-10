@@ -44,6 +44,7 @@ const Styles = {
     marginLeft: '16px',
     padding: '8px 0',
     borderTop: '1px solid #eee',
+    
   },
   datasetLinkStyle: {
     color: '#007BFF',
@@ -69,24 +70,43 @@ const Styles = {
     borderRadius: '4px',
     border: '1px solid #ccc',
     marginBottom: '8px',
+    width: '100%',
+    boxSizing: 'border-box',
 
   },
   buttonStyle: {
-    padding: '10px 20px',
-    borderRadius: '4px',
-    border: 'none',
     backgroundColor: '#007BFF',
-    color: '#fff',
+    color: 'white',
+    padding: '10px 20px',
+    border: 'none',
+    borderRadius: '5px',
     cursor: 'pointer',
+    marginLeft: '10px',
+    fontSize: '16px',
+    fontWeight: 'bold',
+    transition: 'background-color 0.3s',
+    display: 'inline-block',
+    textAlign: 'center',
+    textDecoration: 'none',
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
   },
-  secondaryButton: {
+  addAttributeButton: {
     padding: '5px 8px',
     borderRadius: '4px',
     border: 'none',
-    backgroundColor: '#6c757d',
+    backgroundColor: 'green',
     color: '#fff',
     cursor: 'pointer',
   },
+  addSectionButton: {
+    padding: '5px 8px',
+    borderRadius: '4px',
+    border: 'none',
+    backgroundColor: 'green',
+    color: '#fff',
+    cursor: 'pointer',
+  },
+  
   dangerButton: {
     padding: '5px 8px',
     borderRadius: '4px',
@@ -95,6 +115,8 @@ const Styles = {
     color: '#fff',
     cursor: 'pointer',
     marginLeft: 'auto',
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+    
   },
   createButton: {
     padding: '5px 8px',
@@ -104,6 +126,8 @@ const Styles = {
     color: '#fff',
     cursor: 'pointer',
     marginLeft: 'auto',
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+
   },
   sectionBox: {
     border: '1px solid #ccc',
@@ -111,6 +135,8 @@ const Styles = {
     marginBottom: '16px',
     borderRadius: '6px',
     backgroundColor: '#fff',
+    width: '100%',
+    boxSizing: 'border-box',
   },
 };
 

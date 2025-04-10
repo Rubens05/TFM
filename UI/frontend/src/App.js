@@ -123,7 +123,7 @@ function App() {
       )}
       {/* Mostrar la lista de DPPs */}
 
-      <hr />
+      {!isCreating && (
       <DPPList
         passports={passports}
         selectedVersions={selectedVersions}
@@ -131,6 +131,7 @@ function App() {
         onEdit={handleEdit}
         onDelete={handleDelete}
       />
+      )}
     </div>
   );
 }

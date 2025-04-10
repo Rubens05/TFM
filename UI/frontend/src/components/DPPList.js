@@ -1,6 +1,6 @@
 // client/src/components/DPPList.js
 import React from 'react';
-import Styles from './Styles';
+import Styles from './Styles.js';
 
 function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onDelete }) {
   return (
@@ -98,7 +98,7 @@ function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onD
                 <div style={Styles.footerStyle}>
                   <button onClick={() => onEdit(passport)}
                     style={{
-                      backgroundColor: 'grey',
+                      backgroundColor: '#007BFF',
                       color: 'white',
                       padding: '10px 20px',
                       border: 'none',
