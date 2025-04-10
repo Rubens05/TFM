@@ -14,37 +14,70 @@ const Styles = {
     transition: 'transform 0.2s',
   },
   headerStyle: {
-    display: 'flex',
+    justifyContent: 'center',
+    backgroundColor: '#f0f0f0',
+    borderRadius: '8px',
+    border: '1px solid #ccc',
+    padding: '4px',
     alignItems: 'center',
     gap: '12px',
     marginBottom: '8px',
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    width: '100%',
+    boxSizing: 'border-box',
+    position: 'relative',
+    marginTop: '16px',
   },
   imageStyle: {
     width: '120px',
     height: '120px',
     objectFit: 'cover',
-    borderRadius: '50%',
+    borderRadius: '100%',
     backgroundColor: '#f0f0f0',
+    border: '1px solid #ccc',
+    boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: '8px',
+    marginTop: '8px',
   },
   titleStyle: {
     fontSize: '1.2rem',
     fontWeight: 'bold',
-    margin: 0,
+    marginBottom: '8px',
+    marginTop: '8px',
+    color: '#333',
+    textAlign: 'center',
   },
   selectStyle: {
     marginLeft: 'auto',
     padding: '4px',
     borderRadius: '4px',
+    marginBottom: '8px',
+    marginTop: '8px',
     border: '1px solid #ccc',
     backgroundColor: '#fff',
     cursor: 'pointer',
+    borderRadius: '4px',
 
   },
   sectionStyle: {
     marginLeft: '16px',
     padding: '8px 0',
     borderTop: '1px solid #eee',
-    
+    marginTop: '8px',
+    marginBottom: '8px',
+    display: 'flex',
+    flexDirection: 'column',
+    borderRadius: '8px',
+    whiteSpace: 'pre-wrap',
+    wordWrap: 'break-word',
+    overflowWrap: 'break-word',
+
   },
   datasetLinkStyle: {
     color: '#007BFF',
@@ -56,15 +89,7 @@ const Styles = {
     gap: '8px',
     marginTop: '12px',
   },
-  formStyle: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '16px',
-    padding: '16px',
-    borderRadius: '8px',
-    backgroundColor: '#f9f9f9',
-    boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-  },
+
   inputStyle: {
     padding: '8px',
     borderRadius: '4px',
@@ -106,7 +131,7 @@ const Styles = {
     color: '#fff',
     cursor: 'pointer',
   },
-  
+
   dangerButton: {
     padding: '5px 8px',
     borderRadius: '4px',
@@ -116,7 +141,7 @@ const Styles = {
     cursor: 'pointer',
     marginLeft: 'auto',
     boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-    
+
   },
   createButton: {
     padding: '5px 8px',
@@ -133,12 +158,90 @@ const Styles = {
     border: '1px solid #ccc',
     padding: '12px',
     marginBottom: '16px',
-    borderRadius: '6px',
     backgroundColor: '#fff',
     width: '100%',
     boxSizing: 'border-box',
+    borderRadius: '8px',
   },
+  //Dropdown multiselect styles
+  dropdownContainer: {
+    position: 'relative',
+    width: 'auto',
+    marginBottom: '8px',
+    marginTop: '16px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+
+    gap: '8px',
+    padding: '8px',
+    borderRadius: '4px',
+  },
+
+  dropdownButton: {
+    padding: '8px 12px',
+    width: '100%',
+    textAlign: 'left',
+    border: '1px solid #ccc',
+    backgroundColor: '#fff',
+    cursor: 'pointer',
+    borderRadius: '4px',
+    fontSize: '14px',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+  },
+
+  dropdownContent: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    zIndex: 10,
+    backgroundColor: '#fff',
+    width: '100%',
+    maxHeight: '200px',
+    overflowY: 'auto',
+    border: '1px solid #ccc',
+    borderRadius: '4px',
+    boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+    marginTop: '4px',
+    display: 'none', // Añadir clase "show" en el componente para cambiar a "block"
+
+  },
+
+  dropdownContentShow: {
+    display: 'block',
+  },
+
+  dropdownItem: {
+    display: 'flex',
+    alignItems: 'center',
+    padding: '6px 12px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    color: '#333',
+    backgroundColor: '#fff',
+  },
+
+  dropdownCheckbox: {
+    marginRight: '8px',
+  },
+
+  dropdownActionButton: {
+    fontSize: '12px',
+    padding: '4px 8px',
+    marginLeft: '4px',
+    marginRight: '4px',
+    backgroundColor: '#007BFF',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    transition: 'background-color 0.2s ease-in-out',
+  },
+
+
 };
+
 
 
 export default Styles;
