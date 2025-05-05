@@ -164,7 +164,7 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
         const uploadPromises = sec.selectedDatasets.map((file) => {
           const formData = new FormData();
           formData.append('file', file);
-          return axios.post('http://localhost:5000/api/upload/doc', formData, {
+          return axios.post('/api/upload/doc', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
           });
         });
@@ -199,7 +199,7 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
       const imageFormData = new FormData();
       imageFormData.append('image', selectedPhoto);
       try {
-        const imageResponse = await axios.post('http://localhost:5000/api/upload/img', imageFormData, {
+        const imageResponse = await axios.post('/api/upload/img', imageFormData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
         uploadedImage = {

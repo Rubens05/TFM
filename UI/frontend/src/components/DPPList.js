@@ -42,7 +42,7 @@ function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onD
                 }}>                  {selectedPassportVersions.map((selectedVersion, idx) => {
                   const attributesObj = selectedVersion.attributes || {};
                   const photoUrl = selectedVersion.photo
-                    ? `http://localhost:5000/imgs/${selectedVersion.photo.filename}`
+                    ? `/imgs/${selectedVersion.photo.filename}`
                     : '/defaultimg.png';
 
                   return (
@@ -76,7 +76,7 @@ function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onD
                                     {sectionDatasets.map((ds, i) => (
                                       <li key={i}>
                                         <a
-                                          href={`http://localhost:5000/docs/${ds.filename}`}
+                                          href={`/docs/${ds.filename}`}
                                           download={ds.originalname}
                                           style={Styles.datasetLinkStyle}
                                         >

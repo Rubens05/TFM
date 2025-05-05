@@ -9,14 +9,14 @@ const router = express.Router();
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         // Si no existe, crea la carpeta "uploads"
-        const dir = 'docs/';
+        const dir = path.join(__dirname, '../docs');
         if (!fs.existsSync(dir)) {
             console.log('Creando carpeta docs/');
             fs.mkdirSync(dir);
         }
 
-        // Guarda los archivos en la carpeta "uploads"
-        cb(null, 'docs/');
+        // Guarda los archivos en la carpeta "docs"
+        cb(null, dir);
     },
     filename: function (req, file, cb) {
         // Genera un nombre único para el archivo (por ejemplo, file-<timestamp>.csv)

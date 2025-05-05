@@ -30,14 +30,19 @@ app.use('/api/upload/doc', uploadDocRoutes); // Ruta para documentos
 app.use('/api/upload/img', uploadImgRoutes); // Ruta para imágenes
 
 // Servir archivos estáticos
-app.use('/uploadDoc', express.static('uploadDoc')); // Archivos de documentos
-app.use('/uploadImg', express.static('uploadImg')); // Archivos de imágenes
 app.use('/imgs', express.static(path.join(__dirname, 'imgs')));
 app.use('/docs', express.static(path.join(__dirname, 'docs')));
 
+// Servir React en producción
+app.use(express.static(path.join(__dirname, '../frontend/build')));
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
+});
 
 // Iniciar el servidor
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
+

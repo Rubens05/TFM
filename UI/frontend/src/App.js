@@ -15,7 +15,7 @@ function App() {
 
   const fetchPassports = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/passports');
+      const res = await axios.get('/api/passports');
       setPassports(res.data);
     } catch (error) {
       console.error('Error al obtener los DPPs:', error);
@@ -52,9 +52,9 @@ function App() {
   const handleFormSubmit = async (formData) => {
     try {
       if (editingId) {
-        await axios.put(`http://localhost:5000/api/passports/${editingId}`, formData);
+        await axios.put(`/api/passports/${editingId}`, formData);
       } else {
-        await axios.post('http://localhost:5000/api/passports', formData);
+        await axios.post('/api/passports', formData);
       }
       // Después de enviar, reiniciamos el modo edición y actualizamos la lista
       setEditingId(null);
@@ -67,7 +67,7 @@ function App() {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/passports/${id}`);
+      await axios.delete(`/api/passports/${id}`);
       fetchPassports();
     } catch (error) {
       console.error('Error al eliminar el DPP:', error);
