@@ -29,14 +29,22 @@ const storage = multer.diskStorage({
     },
 });
 
-// Filtro para aceptar solo archivos CSV
+// Filtro para aceptar cualquier tipo de archivo
 const fileFilter = (req, file, cb) => {
-    // Verifica que el tipo MIME corresponda a CSV
-    if (file.mimetype === 'text/csv' || file.mimetype === 'application/vnd.ms-excel') {
-        cb(null, true);
-    } else {
-        cb(new Error('Tipo de archivo no permitido. Por favor, sube un archivo CSV.'), false);
+    const allowedTypes = /csv|pdf|docx|xlsx|png|jpg|jpeg/;
+    const ext = path.extname(file.originalname).toLowerCase();
+    const mime = file.mimetype;
+
+    if (allowedTypes.test(ext) && allowedTypes.test(mime)) {
+        return cb(null, true);
     }
+
+    // Acepta videos (validación de tamaño se hace con 'limits')
+    if (mime.startsWith('video/')) {
+        return cb(null, true);
+    }
+
+    return cb(new Error('Tipo de archivo no permitido.'));
 };
 
 // Configuración de Multer

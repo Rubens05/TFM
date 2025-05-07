@@ -39,7 +39,6 @@ function DropdownMultiselect({ options, selectedValues, onChange }) {
     const labelText =
         selectedValues.length > 1
             ? `Showing versions (${selectedValues.join(', ')})`
-            // Latest versión y la versio
             : `Showing latest version (v${selectedValues[0]})`;
 
 

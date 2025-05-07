@@ -58,6 +58,7 @@ function App() {
       }
       // Después de enviar, reiniciamos el modo edición y actualizamos la lista
       setEditingId(null);
+      setIsCreating(false);  
       setInitialFormData(null);
       fetchPassports();
     } catch (error) {
@@ -143,10 +144,10 @@ function App() {
           />
         )}
       </div>
-      {/* Mostrar la lista de DPPs */}
+      {/* Mostrar la lista de DPPs cuando NO se esté creando o cuando NO se esté editando*/}
       <div style={{ maxWidth: '100%', margin: '0 auto', marginTop: '20px' }}>
         {
-          !isCreating && (
+          (!isCreating && !editingId) && (
             <DPPList
               passports={passports}
               selectedVersions={selectedVersions}

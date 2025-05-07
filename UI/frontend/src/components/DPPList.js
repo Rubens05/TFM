@@ -11,8 +11,9 @@ function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onD
       {passports.length === 0 ? (
         <p>No DPPs found.</p>
       ) : (
-        <ul style={{ listStyle: 'none', padding: 0 }}>
-          {passports.map((passport) => {
+        <ul style={{ listStyle: 'none', padding: 0}}>
+           {/* Mostrar los pasaportes más recientes primero */}
+          {passports.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map((passport) => {
             const selectedPassportVersions = selectedVersions[passport._id] || [];
 
             const versionOptions = passport.versions.map((v) => ({
@@ -64,7 +65,7 @@ function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onD
                             const { datasets: sectionDatasets, ...sectionAttributes } = sectionData;
                             return (
                               <div key={sectionName} style={Styles.sectionStyle}>
-                                <h4>{sectionName} Section</h4>
+                                <h4>{sectionName} </h4>
                                 {Object.entries(sectionAttributes).map(([attrName, attrValue]) => (
                                   <li key={attrName} style={{ overflowWrap: 'break-word', wordBreak: 'break-word' }}>
                                     <strong>{attrName}:</strong> {attrValue}
@@ -97,47 +98,47 @@ function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onD
                   );
                 })}
                 </div>
-
+                
                 <div style={Styles.headerStyle}>
 
-
-
-                  <div style={Styles.footerStyle}>
-                    <button onClick={() => onEdit(passport)}
-                      style={{
-                        backgroundColor: '#007BFF',
-                        color: 'white',
-                        padding: '10px 20px',
-                        border: 'none',
-                        borderRadius: '5px',
-                        cursor: 'pointer',
-                        marginLeft: '10px',
-                        fontSize: '16px',
-                        fontWeight: 'bold',
-                        transition: 'background-color 0.3s',
-                        display: 'inline-block',
-                        textAlign: 'center',
-                        textDecoration: 'none',
-                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-                      }}>Edit</button>
-                    <button onClick={() => onDelete(passport._id)}
-                      style={{
-                        backgroundColor: 'red',
-                        color: 'white',
-                        padding: '10px 20px',
-                        border: 'none',
-                        borderRadius: '5px',
-                        cursor: 'pointer',
-                        marginLeft: '10px',
-                        fontSize: '16px',
-                        fontWeight: 'bold',
-                        transition: 'background-color 0.3s',
-                        display: 'inline-block',
-                        textAlign: 'center',
-                        textDecoration: 'none',
-                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-                      }}>Delete</button>
-                  </div>
+                  {/*Si el nombre del pasaporte es "Lithium Battery" no se muestran los botones de editar y eliminar*/}
+                  {passport.name !== "Lithium Battery" && (
+                    <div style={Styles.footerStyle}>
+                      <button onClick={() => onEdit(passport)}
+                        style={{
+                          backgroundColor: '#007BFF',
+                          color: 'white',
+                          padding: '10px 20px',
+                          border: 'none',
+                          borderRadius: '5px',
+                          cursor: 'pointer',
+                          marginLeft: '10px',
+                          fontSize: '16px',
+                          fontWeight: 'bold',
+                          transition: 'background-color 0.3s',
+                          display: 'inline-block',
+                          textAlign: 'center',
+                          textDecoration: 'none',
+                          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+                        }}>Edit</button>
+                      <button onClick={() => onDelete(passport._id)}
+                        style={{
+                          backgroundColor: 'red',
+                          color: 'white',
+                          padding: '10px 20px',
+                          border: 'none',
+                          borderRadius: '5px',
+                          cursor: 'pointer',
+                          marginLeft: '10px',
+                          fontSize: '16px',
+                          fontWeight: 'bold',
+                          transition: 'background-color 0.3s',
+                          display: 'inline-block',
+                          textAlign: 'center',
+                          textDecoration: 'none',
+                          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+                        }}>Delete</button>
+                    </div>)}
 
                   <DropdownMultiselect
                     options={passport.versions.map((v) => ({
@@ -157,8 +158,8 @@ function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onD
                   />
                 </div>
 
-
-              </li>
+                </li>
+              
             );
           })}
         </ul>
