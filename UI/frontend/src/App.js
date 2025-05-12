@@ -67,6 +67,11 @@ function App() {
   };
 
   const handleDelete = async (id) => {
+    // Confirmación antes de eliminar
+    const confirmDelete = window.confirm('¿Estás seguro de que deseas eliminar este DPP?');
+    if (!confirmDelete) return;
+    // Si se confirma, se procede a eliminar
+    // y se actualiza la lista de DPPs
     try {
       await axios.delete(`/api/passports/${id}`);
       fetchPassports();
