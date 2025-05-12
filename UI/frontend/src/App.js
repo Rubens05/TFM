@@ -33,10 +33,10 @@ function App() {
       let needsUpdate = false;
 
       passports.forEach((passport) => {
-        // Solo añadir si aún no hay selección para este passport
+        // Si aún no hay selección para este passport,
+        // asignamos todas las versiones
         if (!newSelected[passport._id]) {
-          const lastVersion = passport.versions[passport.versions.length - 1];
-          newSelected[passport._id] = [lastVersion];
+          newSelected[passport._id] = passport.versions;
           needsUpdate = true;
         }
       });
@@ -58,7 +58,7 @@ function App() {
       }
       // Después de enviar, reiniciamos el modo edición y actualizamos la lista
       setEditingId(null);
-      setIsCreating(false);  
+      setIsCreating(false);
       setInitialFormData(null);
       fetchPassports();
     } catch (error) {

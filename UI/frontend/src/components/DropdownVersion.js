@@ -31,9 +31,10 @@ function DropdownMultiselect({ options, selectedValues, onChange }) {
     };
 
     const deselectAll = () => {
-        // Dejarlo como un array vacío
-        onChange([]);
-    };
+        // Poner la ultima versión como seleccionada
+        const lastVersion = options[options.length - 1].value;
+        onChange([lastVersion]);
+        };
 
     // Showing versions v1, v2, v3
     const labelText =

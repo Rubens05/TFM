@@ -11,22 +11,15 @@ function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onD
       {passports.length === 0 ? (
         <p>No DPPs found.</p>
       ) : (
-        <ul style={{ listStyle: 'none', padding: 0}}>
-           {/* Mostrar los pasaportes más recientes primero */}
+        <ul style={{ listStyle: 'none', padding: 0 }}>
+          {/* Mostrar los pasaportes más recientes primero */}
           {passports.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map((passport) => {
-            const selectedPassportVersions = selectedVersions[passport._id] || [];
 
-            const versionOptions = passport.versions.map((v) => ({
-              value: v.version,
-              label: `v${v.version} - ${new Date(v.createdAt).toLocaleString()}`,
-            }));
-
-
-            // Si no hay versiones seleccionadas, seleccionamos la última
-            if (selectedPassportVersions.length === 0) {
-              selectedPassportVersions.push(passport.versions[passport.versions.length - 1]);
-            }
-
+            // Mostrar todas las versiones si no hay ninguna seleccionada
+            const selectedPassportVersions =
+              (selectedVersions[passport._id] && selectedVersions[passport._id].length > 0)
+                ? selectedVersions[passport._id]
+                : passport.versions;
             return (
               <li key={passport._id} style={Styles.cardStyle}>
 
@@ -40,65 +33,66 @@ function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onD
                   paddingBottom: '8px',
                   scrollbarWidth: 'thin',
                   msOverflowStyle: 'auto',
-                }}>                  {selectedPassportVersions.map((selectedVersion, idx) => {
-                  const attributesObj = selectedVersion.attributes || {};
-                  const photoUrl = selectedVersion.photo
-                    ? `/imgs/${selectedVersion.photo.filename}`
-                    : '/defaultimg.png';
+                }}>
+                  {selectedPassportVersions.map((selectedVersion, idx) => {
+                    const attributesObj = selectedVersion.attributes || {};
+                    const photoUrl = selectedVersion.photo
+                      ? `/imgs/${selectedVersion.photo.filename}`
+                      : '/defaultimg.png';
 
-                  return (
-                    <div key={idx} style={{ border: '1px solid #ccc', padding: '10px', minWidth: '350px', backgroundColor: '#fff', borderRadius: '8px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)', textAlign: 'center', marginBottom: '16px' }}>
-                      <img
-                        src={photoUrl}
-                        alt="Product image"
-                        style={Styles.imageStyle}
-                      />
-                      <strong style={{
-                        whiteSpace: 'pre-wrap',
-                        wordWrap: 'break-word',
-                        overflowWrap: 'break-word'
-                      }}>{passport.name} (v{selectedVersion.version}) Date: {new Date(selectedVersion.createdAt).toLocaleString()}</strong>
+                    return (
+                      <div key={idx} style={{ border: '1px solid #ccc', padding: '10px', minWidth: '350px', backgroundColor: '#fff', borderRadius: '8px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)', textAlign: 'center', marginBottom: '16px' }}>
+                        <img
+                          src={photoUrl}
+                          alt="Product image"
+                          style={Styles.imageStyle}
+                        />
+                        <strong style={{
+                          whiteSpace: 'pre-wrap',
+                          wordWrap: 'break-word',
+                          overflowWrap: 'break-word'
+                        }}>{passport.name} (v{selectedVersion.version}) Date: {new Date(selectedVersion.createdAt).toLocaleString()}</strong>
 
-                      {Object.keys(attributesObj).length > 0 ? (
-                        <div>
-                          {Object.entries(attributesObj).map(([sectionName, sectionData]) => {
-                            const { datasets: sectionDatasets, ...sectionAttributes } = sectionData;
-                            return (
-                              <div key={sectionName} style={Styles.sectionStyle}>
-                                <h4>{sectionName} </h4>
-                                {Object.entries(sectionAttributes).map(([attrName, attrValue]) => (
-                                  <li key={attrName} style={{ overflowWrap: 'break-word', wordBreak: 'break-word' }}>
-                                    <strong>{attrName}:</strong> {attrValue}
-                                  </li>
-                                ))}
-                                {sectionDatasets && sectionDatasets.length > 0 && (
-                                  <div>
-                                    <strong>Documents:</strong>
-                                    {sectionDatasets.map((ds, i) => (
-                                      <li key={i}>
-                                        <a
-                                          href={`/docs/${ds.filename}`}
-                                          download={ds.originalname}
-                                          style={Styles.datasetLinkStyle}
-                                        >
-                                          {ds.originalname}
-                                        </a>
-                                      </li>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <p>No section data available.</p>
-                      )}
-                    </div>
-                  );
-                })}
+                        {Object.keys(attributesObj).length > 0 ? (
+                          <div>
+                            {Object.entries(attributesObj).map(([sectionName, sectionData]) => {
+                              const { datasets: sectionDatasets, ...sectionAttributes } = sectionData;
+                              return (
+                                <div key={sectionName} style={Styles.sectionStyle}>
+                                  <h4>{sectionName} </h4>
+                                  {Object.entries(sectionAttributes).map(([attrName, attrValue]) => (
+                                    <li key={attrName} style={{ overflowWrap: 'break-word', wordBreak: 'break-word' }}>
+                                      <strong>{attrName}:</strong> {attrValue}
+                                    </li>
+                                  ))}
+                                  {sectionDatasets && sectionDatasets.length > 0 && (
+                                    <div>
+                                      <strong>Documents:</strong>
+                                      {sectionDatasets.map((ds, i) => (
+                                        <li key={i}>
+                                          <a
+                                            href={`/docs/${ds.filename}`}
+                                            download={ds.originalname}
+                                            style={Styles.datasetLinkStyle}
+                                          >
+                                            {ds.originalname}
+                                          </a>
+                                        </li>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <p>No section data available.</p>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-                
+
                 <div style={Styles.headerStyle}>
 
                   {/*Si el nombre del pasaporte es "Lithium Battery" no se muestran los botones de editar y eliminar*/}
@@ -158,8 +152,8 @@ function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onD
                   />
                 </div>
 
-                </li>
-              
+              </li>
+
             );
           })}
         </ul>
