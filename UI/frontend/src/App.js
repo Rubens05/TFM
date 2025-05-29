@@ -4,6 +4,8 @@ import axios from 'axios';
 import DPPForm from './components/DPPForm';
 import DPPList from './components/DPPList';
 import { FaTrash, FaEdit, FaPlus, FaTimes } from 'react-icons/fa';
+import QRCode from 'qrcode';
+
 
 
 function App() {
@@ -51,10 +53,25 @@ function App() {
   // Se invoca desde el formulario para crear o actualizar un DPP
   const handleFormSubmit = async (formData) => {
     try {
+      let created;
       if (editingId) {
         await axios.put(`/api/passports/${editingId}`, formData);
       } else {
-        await axios.post('/api/passports', formData);
+        const createRes = await axios.post('/api/passports', formData);
+        created = createRes.data;
+
+        // Generar el código QR para el nuevo DPP
+        const publicUrl = `${window.location.origin}/dpp/${created._id}`;
+        const qrDataUrl = await QRCode.toDataURL(publicUrl, {
+          margin: 2,
+          width: 300
+        });
+
+        // Enviar el código QR al backend
+        await axios.patch(`/api/passports/${created._id}/qr`, {
+          qrCode: qrDataUrl
+        });
+
       }
       // Después de enviar, reiniciamos el modo edición y actualizamos la lista
       setEditingId(null);
@@ -63,6 +80,7 @@ function App() {
       fetchPassports();
     } catch (error) {
       console.error('Error al enviar el DPP:', error);
+      alert('Falló al crear/actualizar el DPP o al guardar el QR.');
     }
   };
 

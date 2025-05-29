@@ -267,27 +267,27 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
 
           <label>Section Name:</label>
           <div style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
-            
-          <input
-            type="text"
-            value={section.sectionName}
-            onChange={(e) => handleSectionNameChange(sIndex, e.target.value)}
-            placeholder="e.g. Origin"
-            required
-            style={Styles.inputStyle}
-            />
-          {/* Botón para eliminar la sección a la derecha */}
-          <div style={{  alignItems: 'center', marginLeft: '4px', paddingTop: '2px' }}>
-          <button type="button" onClick={() => handleRemoveSection(sIndex)} style={Styles.dangerButton}
-            title="Remove Section"
-            >
-            <FaTrash />
-          </button>
-              </div>
-              
-          
 
+            <input
+              type="text"
+              value={section.sectionName}
+              onChange={(e) => handleSectionNameChange(sIndex, e.target.value)}
+              placeholder="e.g. Origin"
+              required
+              style={Styles.inputStyle}
+            />
+            {/* Botón para eliminar la sección a la derecha */}
+            <div style={{ alignItems: 'center', marginLeft: '4px', paddingTop: '2px' }}>
+              <button type="button" onClick={() => handleRemoveSection(sIndex)} style={Styles.dangerButton}
+                title="Remove Section"
+              >
+                <FaTrash />
+              </button>
             </div>
+
+
+
+          </div>
           <h4>Attributes in {section.sectionName || 'Section Name'}</h4>
           {section.attributes.map((attr, aIndex) => (
             <div key={aIndex} style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
@@ -307,11 +307,11 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
                 onChange={(e) => handleSectionAttributeValueChange(sIndex, aIndex, e.target.value)}
                 style={Styles.inputStyle}
               />
-              <div style={{  alignItems: 'center', marginLeft: '4px', paddingTop: '2px' }}>
-              <button type="button" onClick={() => handleRemoveSectionAttribute(sIndex, aIndex)} style={Styles.dangerButton}
-                title='Remove Attribute'>
-                <FaTrash />
-              </button>
+              <div style={{ alignItems: 'center', marginLeft: '4px', paddingTop: '2px' }}>
+                <button type="button" onClick={() => handleRemoveSectionAttribute(sIndex, aIndex)} style={Styles.dangerButton}
+                  title='Remove Attribute'>
+                  <FaTrash />
+                </button>
               </div>
             </div>
           ))}
@@ -325,7 +325,7 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
           {section.datasets && section.datasets.length > 0 && (
             <div style={{ display: 'flex' }}>
               {section.datasets.map((ds, idx) => (
-                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>                  
+                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <h4>{ds.originalname}</h4>
                   <button type="button" title='Remove Document' onClick={() => handleRemoveSectionDataset(sIndex, idx)} style={Styles.dangerButton}>
                     <FaTrash />
@@ -374,7 +374,8 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
 
         {editingId && (
           <button type="button" onClick={onCancel}
-            style={{  backgroundColor: 'red',
+            style={{
+              backgroundColor: 'red',
               color: 'white',
               padding: '10px 20px',
               border: 'none',
@@ -387,8 +388,9 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
               display: 'inline-block',
               textAlign: 'center',
               textDecoration: 'none',
-              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',}}
-           >
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+            }}
+          >
             {/* Icono de cancelar */}
             Cancel Edit
           </button>

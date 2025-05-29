@@ -137,6 +137,18 @@ router.delete('/:id', async (req, res) => {
           }
         }
       }
+      // 4. Eliminar el QR (si existe)
+      if (passport.qrCode) {
+        const qrCodePath = path.join(__dirname, '../qrcodes', `${passport._id}.png`);
+        if (fs.existsSync(qrCodePath)) {
+          try {
+            await fs.promises.unlink(qrCodePath);
+            console.log(`QR eliminado: ${qrCodePath}`);
+          } catch (err) {
+            console.error(`Error eliminando QR: ${qrCodePath}`, err);
+          }
+        }
+      }
     }
 
     // Finalmente, eliminar el documento de MongoDB
@@ -145,6 +157,34 @@ router.delete('/:id', async (req, res) => {
   } catch (error) {
     console.error("Error en la eliminación:", error);
     return res.status(500).json({ error: error.message });
+  }
+});
+
+// PATCH /api/passports/:id/qr
+router.patch('/:id/qr', async (req, res) => {
+  try {
+    const { qrCode } = req.body;
+    const passport = await Passport.findById(req.params.id);
+    if (!passport) return res.status(404).json({ error: 'DPP no encontrado' });
+
+    // extraemos el base64
+    const match = qrCode.match(/^data:image\/png;base64,(.+)$/);
+    if (!match) return res.status(400).json({ error: 'QR mal formado' });
+
+    const buffer = Buffer.from(match[1], 'base64');
+    const dir = path.join(__dirname, '..', 'qrcodes');
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+    const filename = `${passport._id}.png`;
+    fs.writeFileSync(path.join(dir, filename), buffer);
+
+    passport.qrCode = `/qrcodes/${filename}`;
+    await passport.save();
+
+    res.json(passport);
+  } catch (error) {
+    console.error('Error guardando QR:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 

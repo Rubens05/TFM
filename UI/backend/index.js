@@ -8,6 +8,7 @@ const path = require('path');
 const passportRoutes = require('./routes/passportRoutes');
 const uploadDocRoutes = require('./routes/docRoutes'); // Nuevo nombre para documentos
 const uploadImgRoutes = require('./routes/imgRoutes'); // Nueva ruta para imágenes
+const uploadQRCodeRoutes = require('./routes/qrCodeRoutes'); // Nueva ruta para qrCodes
 
 const app = express();
 
@@ -28,10 +29,12 @@ mongoose
 app.use('/api/passports', passportRoutes);
 app.use('/api/upload/doc', uploadDocRoutes); // Ruta para documentos
 app.use('/api/upload/img', uploadImgRoutes); // Ruta para imágenes
+app.use('/api/upload/qrcode', uploadQRCodeRoutes); // Ruta para imágenes
 
 // Servir archivos estáticos
 app.use('/imgs', express.static(path.join(__dirname, 'imgs')));
 app.use('/docs', express.static(path.join(__dirname, 'docs')));
+app.use('/qrcodes', express.static(path.join(__dirname, 'qrcodes')));
 
 // Servir React en producción
 app.use(express.static(path.join(__dirname, '../frontend/build')));

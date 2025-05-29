@@ -18,6 +18,8 @@ const passportSchema = new mongoose.Schema(
     currentAttributes: { type: Object, default: {} },
     // versions almacena el historial de cambios (v1, v2, etc.)
     versions: [versionSchema],
+    // qrCode almacena el código QR asociado al pasaporte
+    qrCode: { type: String, default: null }
   },
   { timestamps: true }
 );
