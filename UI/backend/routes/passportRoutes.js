@@ -81,6 +81,20 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Obtener un DPP por ID
+router.get('/:id', async (req, res) => {
+  try {
+    const passport = await Passport.findById(req.params.id);
+    if (!passport) {
+      return res.status(404).json({ error: 'DPP no encontrado' });
+    }
+    res.json(passport);
+  } catch (error) {
+    console.error("Error al obtener DPP:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Eliminar un DPP, sus datasets y fotos
 // Se asume que los archivos de datasets se almacenan en "../docs" y las imágenes en "../imgs"
 router.delete('/:id', async (req, res) => {
