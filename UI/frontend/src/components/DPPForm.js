@@ -4,7 +4,7 @@ import axios from 'axios';
 import Styles from './Styles.js';
 import { FaTrash, FaEdit, FaPlus, FaTimes } from 'react-icons/fa';
 
-function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
+function DPPForm({ passports, onSubmit, editingId, initialData, onCancel }) {
   const [name, setName] = useState('');
   // "sections" es un array donde cada elemento es:
   // { sectionName: string, attributes: [{ key, value }], datasets: [Object] (ya existentes), selectedDatasets: [File] (nuevos) }
@@ -12,10 +12,26 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
   const [selectedPhoto, setSelectedPhoto] = useState(null);       // Imagen nueva a subir
   const [existingPhoto, setExistingPhoto] = useState(null);       // Imagen ya existente
 
+
+  // --------------------------------------------
+  // Estados y lógica para "Related Passports"
+  // --------------------------------------------
+  // Cada elemento: { passport: "<ObjectId>", version: <Number>, name?: string }
+  // (podemos añadir el nombre para mostrarlo en la lista, si queremos)
+  const [relatedPassportVersions, setRelatedPassportVersions] = useState([]);
+  // ID de pasaporte seleccionado en el dropdownºººº
+  const [selectedRelatedPassportId, setSelectedRelatedPassportId] = useState('');
+  // Array de versiones que correspondan al pasaporte seleccionado
+  const [relatedVersions, setRelatedVersions] = useState([]);
+  // Versión seleccionada en el segundo dropdown (una sola versión numérica)
+  const [selectedRelatedVersion, setSelectedRelatedVersion] = useState('');
+
+
   // Al cargar initialData (modo edición), convertir el objeto de attributes en secciones.
   useEffect(() => {
     if (initialData) {
       setName(initialData.name || '');
+      // 1) Inicializar “sections” como antes (tú lo tenías)
       // Suponemos que la versión vigente es la última
       const latestVersion = initialData.versions[initialData.versions.length - 1];
       let sectionsArray = [];
@@ -35,22 +51,122 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
       }
       setSections(sectionsArray);
 
-      // Cargar foto existente (si la hay)
+      // 2)  Cargar foto existente (si la hay)
       if (latestVersion.photo) {
         setExistingPhoto(latestVersion.photo);
       } else {
         setExistingPhoto(null);
       }
+
+      // 3) Extraer relatedPassportVersions desde la última versión
+      const existingRel = Array.isArray(latestVersion.relatedPassportVersions)
+        ? latestVersion.relatedPassportVersions
+        : [];
+
+      if (existingRel.length > 0) {
+        // Para depurar:
+
+        const relacionesEnEstado = existingRel.map((rel) => {
+          // Buscar nombre del pasaporte en tu lista “passports” (props)
+          const pasaporteObj = passports.find((p) => p._id === rel.passport);
+          return {
+            passport: rel.passport,      // ObjectId como string
+            version: rel.version,        // número de versión
+            name: pasaporteObj ? pasaporteObj.name : ''
+          };
+        });
+
+        setRelatedPassportVersions(relacionesEnEstado);
+      } else {
+        setRelatedPassportVersions([]);
+      }
     } else {
       clearForm();
+      return;
     }
-  }, [initialData]);
+  }, [initialData, passports]);
+
+  // ------------------------------------------------------------------
+  // Cada vez que cambie selectedRelatedPassportId, actualizamos versiones
+  // ------------------------------------------------------------------
+  useEffect(() => {
+    if (!selectedRelatedPassportId) {
+      setRelatedVersions([]);
+      setSelectedRelatedVersion('');
+      return;
+    }
+
+    // Buscamos en el array “passports” el que coincida con ese ID
+    const passportObj = passports.find((p) => p._id === selectedRelatedPassportId);
+
+    if (passportObj && Array.isArray(passportObj.versions)) {
+      // Mapear a un array de números/strings para el select
+      const versArray = passportObj.versions.map((v) => v.version);
+      setRelatedVersions(versArray);
+    } else {
+      setRelatedVersions([]);
+    }
+    // Por si hubo selección previa de versión, la limpiamos:
+    setSelectedRelatedVersion('');
+  }, [selectedRelatedPassportId, passports]);
+
+  // --------------------------------------------------
+  // Handler cuando el usuario hace click en “Add Related Passport”
+  // --------------------------------------------------
+  const handleAddRelatedPassport = () => {
+    if (!selectedRelatedPassportId || !selectedRelatedVersion) {
+      alert('Debes seleccionar un pasaporte y una versión antes de agregar.');
+      return;
+    }
+
+    // Prevenir duplicados: mismo passport + versión
+    const yaExiste = relatedPassportVersions.some(
+      (rel) =>
+        rel.passport === selectedRelatedPassportId &&
+        rel.version.toString() === selectedRelatedVersion.toString()
+    );
+    if (yaExiste) {
+      alert('Esa relación ya fue añadida.');
+      return;
+    }
+
+    // Buscamos el nombre para mostrar en la lista
+    const passportObj = passports.find((p) => p._id === selectedRelatedPassportId);
+    const passportName = passportObj ? passportObj.name : '';
+
+    // Añadimos al estado
+    setRelatedPassportVersions((prev) => [
+      ...prev,
+      {
+        passport: selectedRelatedPassportId,
+        version: selectedRelatedVersion,
+        name: passportName
+      }
+    ]);
+
+    // Limpiamos selects
+    setSelectedRelatedPassportId('');
+    setRelatedVersions([]);
+    setSelectedRelatedVersion('');
+  };
+
+  // -------------------------------------------------------
+  // Handler para eliminar una relación ya en relatedPassportVersions
+  // -------------------------------------------------------
+  const handleRemoveRelatedPassport = (index) => {
+    setRelatedPassportVersions((prev) => prev.filter((_, i) => i !== index));
+  };
+
 
   const clearForm = () => {
     setName('');
     setSections([]);
     setSelectedPhoto(null);
     setExistingPhoto(null);
+    setRelatedPassportVersions([]);
+    setSelectedRelatedPassportId('');
+    setRelatedVersions([]);
+    setSelectedRelatedVersion('');
   };
 
   // Funciones para secciones
@@ -219,26 +335,61 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
     // 4. Si estamos en modo edición, comparar con la última versión para ver si hay cambios.
     if (editingId && initialData) {
       const latestVersion = initialData.versions[initialData.versions.length - 1];
-      // Comparar atributos (secciones): suponemos que la última versión almacena "attributes" en el mismo formato.
+
+      // 4.1) Comparar atributos (secciones)
       const hasAttributeChanges =
         JSON.stringify(latestVersion.attributes) !== JSON.stringify(sectionsToSend);
-      // Para la foto:
+
+      // 4.2) Comparar foto
       const initialPhoto = latestVersion.photo || null;
       const hasPhotoChanges = !!selectedPhoto || (initialPhoto && !existingPhoto);
-      // Para los datasets, ahora están incluidos en cada sección dentro de attributes.
-      // Si la comparación de attributes falla, se consideran cambios.
 
-      if (!hasAttributeChanges && !hasPhotoChanges) {
+      // 4.3) Comparar related passports
+      //   - “originalRel” es el array tal como vino en la última versión
+      const originalRel = Array.isArray(latestVersion.relatedPassportVersions)
+        ? latestVersion.relatedPassportVersions
+        : [];
+
+      //   - Normalizamos “originalRel” a un array de objetos { passport, version }
+      const originalRelNormalized = originalRel.map((r) => ({
+        passport: String(r.passport),
+        version: String(r.version)
+      }));
+
+      //   - Normalizamos el estado actual “relatedPassportVersions” a { passport, version }
+      const currentRelNormalized = relatedPassportVersions.map((r) => ({
+        passport: String(r.passport),
+        version: String(r.version)
+      }));
+
+      //   - Para comparar, podemos convertir a JSON (importante que el orden de los arrays sea el mismo
+      //     o hayan sido ordenados de la misma forma; aquí asumimos que el backend y el front
+      //     guardan el mismo orden, o que no nos importa el orden)
+      const hasRelatedPassportChanges =
+        JSON.stringify(originalRelNormalized) !== JSON.stringify(currentRelNormalized);
+
+      // 4.4) Si no hay NINGÚN cambio en atributos, foto y related passports, abortamos
+      if (!hasAttributeChanges && !hasPhotoChanges && !hasRelatedPassportChanges) {
         alert('No se detectaron cambios en el DPP.');
         return;
       }
     }
 
-    // 5. Armar el objeto final a enviar
+    // 5. Preparar relatedPassportVersions
+    let relatedToSend = [];
+    if (Array.isArray(relatedPassportVersions) && relatedPassportVersions.length > 0) {
+      relatedToSend = relatedPassportVersions.map((rel) => ({
+        passport: rel.passport, // aquí ya debe ser string con ObjectId válido
+        version: rel.version,   // número de versión concreta
+        name: rel.name || '' // opcional, para mostrar en la UI
+      }));
+    }
+    // 6. Armar el objeto final a enviar
     const formDataToSend = {
       name,
       attributes: sectionsToSend,
       photo: uploadedImage,
+      relatedPassportVersions: relatedToSend
     };
 
     onSubmit(formDataToSend);
@@ -360,6 +511,12 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
         <div style={{ marginBottom: '8px' }}>
           <strong> Existing Image:</strong>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+
+            <img
+              src={`/imgs/${existingPhoto.filename}`}
+              alt="Existing DPP"
+              style={{ width: '100px', height: 'auto', borderRadius: '4px' }}
+            />
             <span>{existingPhoto.originalname}</span>
             <button type="button" onClick={handleRemoveExistingPhoto} style={Styles.dangerButton}
               title='Remove Existing Image'>
@@ -367,7 +524,96 @@ function DPPForm({ onSubmit, editingId, initialData, onCancel }) {
             </button>
           </div>
         </div>
+
+
+
+
       )}
+
+      {/* ------------------------------- */}
+      {/* Zona para “Related Passports” */}
+      {/* ------------------------------- */}
+      <h3>Related Passports (optional)</h3>
+      <div style={Styles.sectionBox}>
+        {/* 1) Mostrar los related passports ya existentes */}
+        <h4>Existing Related Passports</h4>
+        {relatedPassportVersions && relatedPassportVersions.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {relatedPassportVersions.map((rel, index) => (
+              <div
+                key={index}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+              >
+                {/* Muestro nombre + versión */}
+                <span>
+                  {rel.name} (Version {rel.version})
+                </span>
+                {/* Botón para eliminar esta relación */}
+                <button
+                  type="button"
+                  onClick={() => handleRemoveRelatedPassport(index)}
+                  style={Styles.dangerButton}
+                  title="Remove Related Passport"
+                >
+                  <FaTrash />
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p style={{ fontStyle: 'italic', color: '#555' }}>
+            No related passports.
+          </p>
+        )}
+
+        <hr style={{ margin: '8px 0' }} />
+
+        {/* 2) Dropdown para elegir un pasaporte nuevo */}
+        <label htmlFor="select-passport">Select a Passport:</label>
+        <select
+          id="select-passport"
+          style={Styles.inputStyle}
+          value={selectedRelatedPassportId}
+          onChange={(e) => setSelectedRelatedPassportId(e.target.value)}
+        >
+          <option value="">-- Select a Passport --</option>
+          {passports.map((passport) => (
+            <option key={passport._id} value={passport._id}>
+              {passport.name}
+            </option>
+          ))}
+        </select>
+
+        {/* 3) Dropdown para elegir versión (se carga desde relatedVersions) */}
+        <label htmlFor="select-version" style={{ marginTop: '8px', display: 'block' }}>
+          Select Version:
+        </label>
+        <select
+          id="select-version"
+          style={Styles.inputStyle}
+          value={selectedRelatedVersion}
+          onChange={(e) => setSelectedRelatedVersion(e.target.value)}
+          disabled={!selectedRelatedPassportId}
+        >
+          <option value="">-- Select Version --</option>
+          {relatedVersions.map((ver, idx) => (
+            <option key={idx} value={ver}>
+              Version {ver}
+            </option>
+          ))}
+        </select>
+
+        {/* 4) Botón para agregar la relación al estado */}
+        <button
+          type="button"
+          onClick={handleAddRelatedPassport}
+          style={{ ...Styles.addAttributeButton, marginTop: '8px' }}
+        >
+          <FaPlus /> Add Related Passport
+        </button>
+      </div>
+
+      {/* Botones de enviar y cancelar */}
 
       <div style={{ marginTop: '16px' }}>
         <button type="submit" style={Styles.buttonStyle}>{editingId ? 'Update DPP' : 'Create DPP'}</button>

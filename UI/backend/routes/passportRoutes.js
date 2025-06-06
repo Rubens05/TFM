@@ -11,7 +11,7 @@ const path = require('path');
 // por ejemplo: { Origen: { pais: "España", ciudad: "Madrid", datasets: [...] }, Logística: { transporte: "Camión", datasets: [...] } }
 router.post('/', async (req, res) => {
   try {
-    const { name, attributes, datasets, photo } = req.body;
+    const { name, attributes, datasets, photo, relatedPassportVersions } = req.body;
     console.log("POST /api/passports - req.body:", req.body);
     // En este nuevo formato, se asume que los datasets pueden estar incluidos dentro de cada sección;
     // Si además se envía un array datasets global, se usará para la versión global.
@@ -22,12 +22,16 @@ router.post('/', async (req, res) => {
       attributes: attributes,
       datasets: initialDatasets,
       photo: initialPhoto,
+      // Si no se envía, ponemos array vacío
+      relatedPassportVersions: relatedPassportVersions || [],
     };
     const newPassport = new Passport({
       name,
       currentAttributes: attributes,
       versions: [initialVersion],
     });
+    console.log("Nuevo DPP creado:", newPassport);
+    console.log("Related passports:", relatedPassportVersions);
     await newPassport.save();
     return res.status(201).json(newPassport);
   } catch (error) {
@@ -38,7 +42,7 @@ router.post('/', async (req, res) => {
 // Actualizar (editar) un DPP: se añade una nueva versión
 router.put('/:id', async (req, res) => {
   try {
-    const { attributes, datasets, photo } = req.body;
+    const { attributes, datasets, photo, relatedPassportVersions } = req.body;
     // "attributes" es el objeto final con secciones.
     // "datasets" es el array global final (si se usa) y
     // "photo" es el objeto de la foto a utilizar (puede ser null).
@@ -58,7 +62,8 @@ router.put('/:id', async (req, res) => {
       attributes: attributes,
       datasets: datasets || [],
       photo: photo || null,
-      createdAt: new Date()
+      createdAt: new Date(),
+      relatedPassportVersions: relatedPassportVersions || [],
     };
 
     // Insertar la nueva versión

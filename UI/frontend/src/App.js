@@ -2,10 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import DPPDetail from './components/DPPDetail';
+import DPPDetailVersion from './components/DPPDetailVersion';
 import axios from 'axios';
 import DPPForm from './components/DPPForm';
 import DPPList from './components/DPPList';
-import { FaTrash, FaEdit, FaPlus, FaTimes } from 'react-icons/fa';
 import QRCode from 'qrcode';
 
 
@@ -83,7 +83,6 @@ function App() {
       setInitialFormData(null);
       fetchPassports();
     } catch (error) {
-      console.error('Error al enviar el DPP:', error);
       alert('Falló al crear/actualizar el DPP o al guardar el QR.');
     }
   };
@@ -159,6 +158,7 @@ function App() {
                 {/* Mostrar el formulario solo si se ha pulsado editar o crear*/}
                 {(isCreating) && (
                   <DPPForm
+                    passports={passports}
                     initialFormData={initialFormData}
                     onSubmit={handleFormSubmit}
                     onCancel={handleCancelEdit}
@@ -168,6 +168,7 @@ function App() {
                 {(editingId && !isCreating) && (
                   <DPPForm
                     key={editingId} // << forzamos re-montaje cuando cambia editingId
+                    passports={passports}
                     editingId={editingId}
                     initialData={initialFormData}
                     onSubmit={handleFormSubmit}
@@ -194,6 +195,8 @@ function App() {
         } />
 
         <Route path="/dpp/:id" element={<DPPDetail />} />
+
+        <Route path='/dpp/:id/:version' element={<DPPDetailVersion />} />
 
       </Routes>
     </>

@@ -33,7 +33,7 @@ function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onD
             // Generar el QR code URL para el pasaporte
             const qrCodeUrl = passport.qrCode
               ? `${passport.qrCode}`
-              : '/defaultqr.png'; // Ruta por defecto si no hay QR code
+              : '/defaultimg.png'; // Ruta por defecto si no hay QR code
 
             return (
               <li key={passport._id} style={Styles.cardStyle}>
@@ -98,13 +98,7 @@ function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onD
                         >
                           {showQR ? 'Show QR' : 'Show Photo'}
                         </button>
-
-
-
-
-
                         <br />
-
                         <strong style={{
                           whiteSpace: 'pre-wrap',
                           wordWrap: 'break-word',
@@ -143,6 +137,28 @@ function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onD
                                 </div>
                               );
                             })}
+
+                            <div style={Styles.sectionStyle}>
+                              <h4>Related Passports</h4>
+                              {selectedVersion.relatedPassportVersions && selectedVersion.relatedPassportVersions.length > 0 ? (
+
+                                selectedVersion.relatedPassportVersions.map((related, index) => (
+                                  <li key={index}>
+                                    <strong>
+                                      <a
+                                        href={`http://localhost:5000/dpp/${related.passport}/${related.version}`}
+                                        style={{ color: '#007BFF', textDecoration: 'underline' }}
+
+                                      >{related.name} (v{related.version})
+
+                                      </a></strong>
+                                  </li>
+                                ))
+
+                              ) : (
+                                <p>No related passports.</p>
+                              )}
+                            </div>
                           </div>
                         ) : (
                           <p>No section data available.</p>

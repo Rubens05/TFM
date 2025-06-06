@@ -9,17 +9,35 @@ const versionSchema = new mongoose.Schema({
   datasets: { type: [Object], default: [] }, // Cada versión con su propio array de datasets
   photo: { type: Object, default: null },      // Objeto con los datos de la foto (originalname, encoding, mimetype, size, filename)
   createdAt: { type: Date, default: Date.now },
+  // Nuevo campo: relaciona con una versión concreta de otro passport
+
+  relatedPassportVersions: [
+    {
+      passport: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Passport',
+        required: true
+      },
+      version: {
+        type: Number,
+        required: true
+      },
+      name: { type: String, required: true } // Nombre del DPP relacionado
+    }
+  ]
 });
 
 const passportSchema = new mongoose.Schema(
   {
+    // nombre del dpp
     name: { type: String, required: true },
     // currentAttributes contendrá la versión "activa" (última)
     currentAttributes: { type: Object, default: {} },
     // versions almacena el historial de cambios (v1, v2, etc.)
     versions: [versionSchema],
-    // qrCode almacena el código QR asociado al pasaporte
-    qrCode: { type: String, default: null }
+    // qrCode almacena la ruta al código QR asociado al pasaporte (/qrcode/id.png)
+    qrCode: { type: String, default: null },
+
   },
   { timestamps: true }
 );

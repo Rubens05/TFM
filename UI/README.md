@@ -1,12 +1,12 @@
 TODO
     
 
-Funcionalidad del QR
-    -Generar el QR que redireccione al DPP (literalmente copiar y pegar el componente DPP LIST pero solo con el id del item que sea)
-    -Poner en la lista de DPPs el QR en cada item, para que se pueda descargar (con la idea de que se ponga fisicamente en el producto)
+Corregir UI para que se vea mejor
+DPPDetail
+DPPDetailVersion
+
 
 Filtrado
-    -Permitir mostrar todas las versiones de un DPP, o seleccionar varias, que las muestre de forma horizontal.
     -Permitir filtrar por fecha, mostrar las versiones que haya en el rango de fechas marcado
     -Permitir resaltar los datos que han cambiado con respecto la version anterior, o la version que se esté consultando, por ejemplo v2 y v4. La v4 que tenga marcadas los cambios con respecto la v2.
 
