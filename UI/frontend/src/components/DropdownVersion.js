@@ -34,7 +34,7 @@ function DropdownMultiselect({ options, selectedValues, onChange }) {
         // Poner la ultima versión como seleccionada
         const lastVersion = options[options.length - 1].value;
         onChange([lastVersion]);
-        };
+    };
 
     // Showing versions v1, v2, v3
     const labelText =
@@ -46,7 +46,10 @@ function DropdownMultiselect({ options, selectedValues, onChange }) {
     return (
         <div style={Styles.dropdownContainer} ref={dropdownRef}>
             <div style={Styles.dropdownButton} onClick={toggleDropdown}>
-                {labelText}
+                <span>{labelText}</span>
+                <span style={{ marginLeft: '8px', fontSize: '12px' }}>
+                    {open ? '▲' : '▼'}
+                </span>
             </div>
             <div
                 style={{

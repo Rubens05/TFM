@@ -112,8 +112,15 @@ function App() {
   };
 
   return (
+
+
+
     <>
+
+
+
       <Routes>
+
         <Route path="/" element={
           <>
             <div style={{ backgroundColor: '#f0f0f0', padding: '20px', fontFamily: 'Arial, sans-serif', borderRadius: '8px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
@@ -127,7 +134,7 @@ function App() {
                 {/* Display del titulo DPP y al lado el boton de crear */}
                 <h1 style={{ display: 'inline-block', marginRight: '90px' }}>Digital Product Passport</h1>
 
-                {/* Botón para crear un nuevo DPP, al pulsarlo cambia a cancelar creación*/}
+                {/* Botón para crear un nuevo DPP, al pulsarlo cambia a cancelar creación, solo si se esta en la route /*/}
                 <button
                   onClick={() => {
                     setEditingId(null);
@@ -154,49 +161,78 @@ function App() {
                 >
                   {isCreating ? 'Cancel DPP' : 'Create DPP'}
                 </button>
-
-                {/* Mostrar el formulario solo si se ha pulsado editar o crear*/}
-                {(isCreating) && (
-                  <DPPForm
-                    passports={passports}
-                    initialFormData={initialFormData}
-                    onSubmit={handleFormSubmit}
-                    onCancel={handleCancelEdit}
-                  />
-                )}
-                {/* Mostrar el formulario solo si se ha pulsado editar */}
-                {(editingId && !isCreating) && (
-                  <DPPForm
-                    key={editingId} // << forzamos re-montaje cuando cambia editingId
-                    passports={passports}
-                    editingId={editingId}
-                    initialData={initialFormData}
-                    onSubmit={handleFormSubmit}
-                    onCancel={handleCancelEdit}
-                  />
-                )}
-              </div>
-              {/* Mostrar la lista de DPPs cuando NO se esté creando o cuando NO se esté editando*/}
-              <div style={{ maxWidth: '100%', margin: '0 auto', marginTop: '20px' }}>
-                {
-                  (!isCreating && !editingId) && (
-                    <DPPList
-                      passports={passports}
-                      selectedVersions={selectedVersions}
-                      setSelectedVersions={setSelectedVersions}
-                      onEdit={handleEdit}
-                      onDelete={handleDelete}
-                    />
-                  )
-                }
               </div>
             </div>
+            {/* Mostrar el formulario solo si se ha pulsado editar o crear*/}
+            {(isCreating) && (
+              <DPPForm
+                passports={passports}
+                initialFormData={initialFormData}
+                onSubmit={handleFormSubmit}
+                onCancel={handleCancelEdit}
+              />
+            )}
+            {/* Mostrar el formulario solo si se ha pulsado editar */}
+            {(editingId && !isCreating) && (
+              <DPPForm
+                key={editingId} // << forzamos re-montaje cuando cambia editingId
+                passports={passports}
+                editingId={editingId}
+                initialData={initialFormData}
+                onSubmit={handleFormSubmit}
+                onCancel={handleCancelEdit}
+              />
+            )}
+
+            {/* Mostrar la lista de DPPs cuando NO se esté creando o cuando NO se esté editando*/}
+            {
+              (!isCreating && !editingId) && (
+                <DPPList
+                  passports={passports}
+                  selectedVersions={selectedVersions}
+                  setSelectedVersions={setSelectedVersions}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
+              )
+            }
           </>
         } />
 
-        <Route path="/dpp/:id" element={<DPPDetail />} />
+        <Route path="/dpp/:id" element={<>
+          <div style={{ backgroundColor: '#f0f0f0', padding: '20px', fontFamily: 'Arial, sans-serif', borderRadius: '8px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
+            <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+              {/*Funditec image*/}
+              <img
+                src="/funditecrb.png"
+                alt="Funditec Logo"
+                style={{ width: '100%', height: 'auto', marginBottom: '20px' }}
+              />
+            </div>
+          </div>
 
-        <Route path='/dpp/:id/:version' element={<DPPDetailVersion />} />
+          <DPPDetail />
+        </>
+
+        } />
+
+        <Route path='/dpp/:id/:version' element={
+          <>
+            <div style={{ backgroundColor: '#f0f0f0', padding: '20px', fontFamily: 'Arial, sans-serif', borderRadius: '8px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
+              <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+                {/*Funditec image*/}
+                <img
+                  src="/funditecrb.png"
+                  alt="Funditec Logo"
+                  style={{ width: '100%', height: 'auto', marginBottom: '20px' }}
+                />
+              </div>
+            </div>
+
+            <DPPDetailVersion />
+          </>
+
+        } />
 
       </Routes>
     </>

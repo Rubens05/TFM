@@ -1,4 +1,4 @@
-// client/src/components/DPPDetailPage.js
+// client/src/components/DPPDetail.js
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
@@ -12,8 +12,7 @@ export default function DPPDetailPage() {
     const [passport, setPassport] = useState(null);
     // Igual que en DPPList, lista de versiones seleccionadas
     const [selectedVersions, setSelectedVersions] = useState({});
-    // Para toggle foto/QR por pasaporte (aquí solo uno)
-    const [showQRMap, setShowQRMap] = useState({});
+
 
     useEffect(() => {
         // Carga el DPP por id
@@ -26,20 +25,16 @@ export default function DPPDetailPage() {
             .catch(console.error);
     }, [id]);
 
-    const toggleShowQR = (_) => {
-        setShowQRMap(prev => ({ ...prev, [id]: !prev[id] }));
-    };
 
     if (!passport) return <p>Cargando DPP…</p>;
 
     // UI idéntica a tu return de DPPList, pero solo un elemento
     return (
         <div style={{ maxWidth: 'auto', padding: '20px', backgroundColor: '#f0f0f0' }}>
-            <h2>DPP Detail</h2>
+
 
             <ul style={{ listStyle: 'none', padding: 0 }}>
                 {([passport]).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map((passport) => {
-                    const showQR = showQRMap[passport._id] || false;
                     const selectedPassportVersions =
                         (selectedVersions[passport._id] && selectedVersions[passport._id].length > 0)
                             ? selectedVersions[passport._id]
@@ -51,6 +46,11 @@ export default function DPPDetailPage() {
 
                     return (
                         <li key={passport._id} style={Styles.cardStyle}>
+                            <div style={Styles.headerStyle}>
+                                <h2 style={Styles.titleStyle}>{passport.name}</h2>
+                            </div>
+
+
                             <div style={{
                                 display: 'flex',
                                 flexDirection: 'row',
@@ -60,6 +60,8 @@ export default function DPPDetailPage() {
                                 scrollbarWidth: 'thin',
                                 msOverflowStyle: 'auto',
                             }}>
+
+
                                 {selectedPassportVersions.map((selectedVersion, idx) => {
                                     const attributesObj = selectedVersion.attributes || {};
                                     const photoUrl = selectedVersion.photo
@@ -67,22 +69,13 @@ export default function DPPDetailPage() {
                                         : '/defaultimg.png';
 
                                     return (
-                                        <div key={idx} style={{
-                                            border: '1px solid #ccc',
-                                            padding: '10px',
-                                            minWidth: '350px',
-                                            backgroundColor: '#fff',
-                                            borderRadius: '8px',
-                                            boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-                                            textAlign: 'center',
-                                            marginBottom: '16px'
-                                        }}>
+                                        <div key={idx} style={{ border: '1px solid #ccc', padding: '10px', minWidth: '30.5%', maxWidth: '30.5%', backgroundColor: '#fff', borderRadius: '8px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)', textAlign: 'center', marginBottom: '1rem', marginTop: '1rem' }}>
                                             <strong style={{
                                                 whiteSpace: 'pre-wrap',
                                                 wordWrap: 'break-word',
                                                 overflowWrap: 'break-word',
                                                 marginTop: '10px',
-                                            }}>{passport.name} (v{selectedVersion.version})</strong>
+                                            }}>(v{selectedVersion.version})</strong>
                                             <br />
 
                                             <img
@@ -102,7 +95,7 @@ export default function DPPDetailPage() {
                                                 wordWrap: 'break-word',
                                                 overflowWrap: 'break-word',
                                                 marginTop: '10px',
-                                            }}>Date: {new Date(selectedVersion.createdAt).toLocaleString()}</strong>
+                                            }}>{new Date(selectedVersion.createdAt).toLocaleString()}</strong>
 
                                             {Object.keys(attributesObj).length > 0 ? (
                                                 <div>
@@ -145,7 +138,6 @@ export default function DPPDetailPage() {
                             </div>
 
                             <div style={Styles.headerStyle}>
-                                {/* Aquí podrías omitir los botones de Edit/Delete o reutilizarlos si quieres */}
                                 <DropdownMultiselect
                                     options={passport.versions.map((v) => ({
                                         value: v.version,

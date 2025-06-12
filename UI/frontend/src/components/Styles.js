@@ -13,6 +13,20 @@ const Styles = {
     position: 'relative',
     transition: 'transform 0.2s',
   },
+  cardStyledPPVersion: {
+    minWidth: '75%',
+    border: '1px solid #ccc',
+    borderRadius: '8px',
+    padding: '16px',
+    marginBottom: '16px',
+    boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+    backgroundColor: '#f9f9f9',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    position: 'relative',
+    transition: 'transform 0.2s',
+  },
   headerStyle: {
     justifyContent: 'center',
     backgroundColor: '#f0f0f0',
@@ -21,7 +35,6 @@ const Styles = {
     padding: '4px',
     alignItems: 'center',
     gap: '12px',
-    marginBottom: '8px',
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
@@ -29,7 +42,6 @@ const Styles = {
     width: '100%',
     boxSizing: 'border-box',
     position: 'relative',
-    marginTop: '16px',
   },
   imageStyle: {
     width: '10.2rem',
@@ -184,7 +196,6 @@ const Styles = {
     flexDirection: 'column',
     alignItems: 'flex-start',
     justifyContent: 'center',
-
     gap: '8px',
     padding: '8px',
     borderRadius: '4px',
@@ -192,7 +203,6 @@ const Styles = {
 
   dropdownButton: {
     padding: '8px 12px',
-    width: '100%',
     textAlign: 'left',
     border: '1px solid #ccc',
     backgroundColor: '#fff',
