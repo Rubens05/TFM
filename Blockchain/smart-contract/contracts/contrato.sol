@@ -2,56 +2,55 @@
 pragma solidity ^0.8.0;
 
 contract Contrato {
-    // Estructura para almacenar el hash de datos
+    // Estructura para almacenar el hash y timestamp
     struct DataRecord {
-        uint256 timestamp;
-        bytes32 dataHash;
+        uint256 timestamp;   // Fecha de updatedAt en segundos Unix
+        bytes32 dataHash;    // Hash calculado de name + currentAttributes + updatedAt
     }
-    // Mapeo para almacenar el hash individual. La llave se genera a partir de (parcelId, prodId, timestamp)
-    mapping(bytes32 => bytes32) public dataHashes;
 
-    // Eventos para registrar las operaciones de guardado
+    // Mapeo desde una clave única (por ejemplo, keccak256 del _id del JSON) al registro de datos
+    mapping(bytes32 => DataRecord) public records;
+
+    // Eventos para registrar el guardado de hash
     event DataHashStored(
-        uint256 indexed parcelId,
-        uint256 indexed prodId,
+        bytes32 indexed recordKey,
         uint256 timestamp,
         bytes32 dataHash
     );
 
-    /// @notice Función interna para obtener la llave de un registro individual a partir de parcelId, prodId y timestamp
-    function _getIndividualKey(
-        uint256 parcelId,
-        uint256 prodId,
-        uint256 timestamp
-    ) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(parcelId, prodId, timestamp));
-    }
-
-    /// @notice (1) Almacena un hash de datos.
-    /// Se recibe: parcelId, prodId, timestamp y el hash de los datos.
-    /// Además, se agrupa el registro en un array para poder recuperar todos los hashes de un día.
-    function storeDataHash(
-        uint256 parcelId,
-        uint256 prodId,
+    /**
+     * @notice Almacena el hash de un registro a partir de un identificador y timestamp
+     * @param recordKey Clave única del registro (por ejemplo, keccak256(abi.encodePacked(_id)))
+     * @param timestamp Fecha de updatedAt en Unix seconds
+     * @param dataHash Hash calculado off-chain de name + currentAttributes + updatedAt
+     */
+    function storeHash(
+        bytes32 recordKey,
         uint256 timestamp,
         bytes32 dataHash
     ) external {
-        // Almacena el hash individual
-        bytes32 key = _getIndividualKey(parcelId, prodId, timestamp);
-        dataHashes[key] = dataHash;
+        // Guardamos el registro
+        records[recordKey] = DataRecord({
+            timestamp: timestamp,
+            dataHash: dataHash
+        });
 
-        // Emite un evento para registrar la operación
-        emit DataHashStored(parcelId, prodId, timestamp, dataHash);
+        // Emitimos evento
+        emit DataHashStored(recordKey, timestamp, dataHash);
     }
 
-    /// @notice (2) Recupera un hash individual.
-    /// Se pasa parcelId, prodId y timestamp.
-    function getDataHash(
-        uint256 parcelId,
-        uint256 prodId,
-        uint256 timestamp
-    ) external view returns (bytes32) {
-        bytes32 key = _getIndividualKey(parcelId, prodId, timestamp);
-        return dataHashes[key];
+    /**
+     * @notice Recupera el registro almacenado para una clave dada
+     * @param recordKey Clave única del registro
+     * @return timestamp Fecha almacenada
+     * @return dataHash Hash almacenado
+     */
+    function getHash(bytes32 recordKey)
+        external
+        view
+        returns (uint256 timestamp, bytes32 dataHash)
+    {
+        DataRecord storage rec = records[recordKey];
+        return (rec.timestamp, rec.dataHash);
     }
 }

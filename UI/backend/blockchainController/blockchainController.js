@@ -1,49 +1,104 @@
-require("dotenv").config();
-const { ethers } = require("ethers");
-const path = require("path");
+// blockchainInterface.js
+require('dotenv').config();
+const path = require('path');
+// Importa lo que v6 realmente exporta:
+const {  JsonRpcProvider,  Wallet,  Contract,  keccak256,  toUtf8Bytes} = require('ethers')
+const contractJson = require(path.resolve(__dirname, '../../../Blockchain/smart-contract/artifacts/contracts/contrato.sol/Contrato.json'));
 
-// Cargar el ABI del contrato 
-const contractABI = require(path.join(
-    __dirname,
-    "x"
-)).abi;
 
-// Dirección del contrato desplegado
-const contractAddress = "x";
-const privateKey = "x";
+const {
+  NETWORK_URL,
+  PRIVATE_KEY,
+  CONTRACT_ADDRESS
+} = process.env;
 
-// Configuración del proveedor y el contrato
-const provider = new ethers.JsonRpcProvider(process.env.BESU_RPC_URL);
-const wallet = new ethers.Wallet(privateKey, provider);
-const contract = new ethers.Contract(contractAddress, contractABI, wallet);
+// Inicializa proveedor y signer
+const provider = new JsonRpcProvider(NETWORK_URL)
+const signer   = new Wallet(PRIVATE_KEY, provider)
+const abi      = contractJson.abi
 
-/**
- * Almacenar un dataHash.
- * @param {number} a - Identificador del campo.
- * @param {number} b - Identificador de producción.
- * @param {number} c - Marca de tiempo (en segundos).
- * @param {string} d - Hash de datos (bytes32).
- */
-async function storeDataHash(a, b, c, d) {
-    const tx = await contract.storeDataHash(a, b, c, d);
-    await tx.wait();
-    console.log(`[Blockchain] DataHash saved ${a}: ${b}`);
+// Instancia del contrato
+async function getContract() {
+  return new Contract(CONTRACT_ADDRESS, abi, signer)
 }
 
 /**
- * Obtener un dataHash individual.
- * @param {number} a - Identificador del campo.
- * @param {number} b - Identificador de producción.
- * @param {number} c - Marca de tiempo (en segundos).
- * @returns {Promise<string>} El dataHash almacenado.
+ * Calcula la clave única del registro a partir del _id.$oid del JSON.
+ * @param {string} oid MongoDB ObjectID string
+ * @returns {bytes32} recordKey
  */
-async function getDataHash(a, b, c) {
-    const hash = await contract.getDataHash(a, b, c);
-    console.log(`[Blockchain] DataHash received ${c}: ${hash}`);
-    return hash;
+function computeRecordKey(oid) {
+   return keccak256(toUtf8Bytes(oid))
+}
+
+/**
+ * Convierte la fecha ISO de updatedAt a segundos Unix.
+ * @param {string} isoDate
+ * @returns {number}
+ */
+function toUnixTimestamp(isoDate) {
+  return Math.floor(new Date(isoDate).getTime() / 1000);
+}
+
+/**
+ * Calcula el hash de los campos name + currentAttributes + updatedAt (Unix).
+ * @param {string} name
+ * @param {object} currentAttributes
+ * @param {number} unixTs
+ * @returns {bytes32}
+ */
+function computeDataHash(name, currentAttributes, unixTs) {
+  const payload = name + JSON.stringify(currentAttributes) + unixTs
+  return keccak256(toUtf8Bytes(payload))
+}
+
+/**
+ * Guarda en blockchain el DataRecord correspondiente al DPP recibido.
+ * @param {object} json  El objeto completo tal como lo devuelve el DPP
+ * @returns {Promise<bytes32>}  El recordKey usado
+ */
+async function saveDataRecord(json) {
+  console.log(`Storing DataRecord for ${json}`);
+  console.log(`  - _id: ${json._id.$oid}`);
+  console.log(`  - name: ${json.name}`);
+  console.log(`  - updatedAt: ${json.updatedAt.$date}`);
+  console.log(`  - currentAttributes: ${JSON.stringify(json.currentAttributes)}`);
+  const contract   = await getContract();
+  const oid        = json._id.$oid;
+  const recordKey  = computeRecordKey(oid);
+  const unixTs     = toUnixTimestamp(json.updatedAt.$date);
+  const dataHash   = computeDataHash(
+    json.name,
+    json.currentAttributes,
+    unixTs
+  );
+
+  // Envía la tx
+  const tx = await contract.storeHash(recordKey, unixTs, dataHash);
+  const receipt = await tx.wait();
+  console.log(`✔ Data Hash stored`);
+  return recordKey;
+}
+
+/**
+ * Recupera el registro (timestamp y hash) de la blockchain.
+ * @param {string|bytes32} recordKey  El mismo que devolvió saveDataRecord
+ * @returns {Promise<{ timestamp: number, dataHash: string }>}
+ */
+async function getDataRecord(recordKey) {
+  const contract = await getContract();
+  const [ timestamp, dataHash ] = await contract.getHash(recordKey);
+  // timestamp viene como BigNumber
+  return {
+    timestamp: timestamp.toNumber(),
+    dataHash
+  };
 }
 
 module.exports = {
-    storeDataHash,
-    getDataHash,
+  saveDataRecord,
+  getDataRecord,
+  computeRecordKey,
+  computeDataHash,
+  toUnixTimestamp
 };

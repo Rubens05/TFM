@@ -6,6 +6,10 @@ const Passport = require('../models/Passport');
 const fs = require('fs');
 const path = require('path');
 
+// Importart interface Blockchain
+// Importamos la interfaz blockchain
+const { saveDataRecord } = require('../blockchainController/blockchainController');
+
 // Crear un nuevo DPP (versión 1)
 // Se espera que "attributes" venga como objeto de secciones,
 // por ejemplo: { Origen: { pais: "España", ciudad: "Madrid", datasets: [...] }, Logística: { transporte: "Camión", datasets: [...] } }
@@ -25,6 +29,7 @@ router.post('/', async (req, res) => {
       // Si no se envía, ponemos array vacío
       relatedPassportVersions: relatedPassportVersions || [],
     };
+    // Crear el DPP inicial
     const newPassport = new Passport({
       name,
       currentAttributes: attributes,
@@ -32,7 +37,22 @@ router.post('/', async (req, res) => {
     });
     console.log("Nuevo DPP creado:", newPassport);
     console.log("Related passports:", relatedPassportVersions);
+    // Guardar el DPP en la base de datos
     await newPassport.save();
+
+    //Debugear antes de blockchain
+    console.log("DPP guardado en la base de datos:", newPassport);
+     // Integración blockchain: guardamos el hash y obtenemos la key
+    const recordKey = await saveDataRecord({
+      _id: { $oid: newPassport._id.toString() },
+      name: newPassport.name,
+      currentAttributes: newPassport.currentAttributes,
+      updatedAt: { $date: newPassport.updatedAt.toISOString() }
+    });
+    console.log("Record key obtenido:", recordKey);
+    newPassport.recordKey = recordKey;
+    await newPassport.save();
+
     return res.status(201).json(newPassport);
   } catch (error) {
     return res.status(500).json({ error: error.message });
@@ -68,8 +88,19 @@ router.put('/:id', async (req, res) => {
 
     // Insertar la nueva versión
     passport.versions.push(newVersion);
-
+    // Guardar el DPP actualizado
     await passport.save();
+
+    // Integración blockchain: actualizamos el hash on-chain con la misma key
+    const recordKey = await saveDataRecord({
+      _id: { $oid: passport._id.toString() },
+      name: passport.name,
+      currentAttributes: passport.currentAttributes,
+      updatedAt: { $date: passport.updatedAt.toISOString() }
+    });
+    passport.recordKey = recordKey;
+    await passport.save();
+
     return res.status(200).json(passport);
   } catch (error) {
     return res.status(500).json({ error: error.message });

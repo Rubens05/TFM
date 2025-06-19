@@ -27,3 +27,5 @@ Blockchain Verts, implementar algo parecido que muestre por bloques como se va a
 
 
 
+Control de errores:
+    Cuando falle la parte de blockchain, hacer rollback y eliminar del mongo todo lo relacionado con ese DPP

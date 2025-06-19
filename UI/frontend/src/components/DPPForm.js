@@ -3,16 +3,16 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Styles from './Styles.js';
 import { FaTrash, FaEdit, FaPlus, FaTimes } from 'react-icons/fa';
+import LoadingScreen from './LoadingScreen.js';
 
 function DPPForm({ passports, onSubmit, editingId, initialData, onCancel }) {
+  const [loading, setLoading] = useState(false);
   const [name, setName] = useState('');
   // "sections" es un array donde cada elemento es:
   // { sectionName: string, attributes: [{ key, value }], datasets: [Object] (ya existentes), selectedDatasets: [File] (nuevos) }
   const [sections, setSections] = useState([]);
   const [selectedPhoto, setSelectedPhoto] = useState(null);       // Imagen nueva a subir
   const [existingPhoto, setExistingPhoto] = useState(null);       // Imagen ya existente
-
-
   // --------------------------------------------
   // Estados y lógica para "Related Passports"
   // --------------------------------------------
@@ -244,6 +244,7 @@ function DPPForm({ passports, onSubmit, editingId, initialData, onCancel }) {
 
   // Al enviar el formulario:
   const handleSubmit = async (e) => {
+    setLoading(true);
     e.preventDefault();
 
     // 1. Validar que exista al menos una sección y que en cada sección haya al menos un atributo.
@@ -392,9 +393,16 @@ function DPPForm({ passports, onSubmit, editingId, initialData, onCancel }) {
       relatedPassportVersions: relatedToSend
     };
 
-    onSubmit(formDataToSend);
+    // Pantalla de carga
+    await onSubmit(formDataToSend);
+    setLoading(false);
+    // Quitar pantalla de carga y limpiar formulario
     clearForm();
   };
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
 
   return (
     <form onSubmit={handleSubmit} style={Styles.formStyle}>
