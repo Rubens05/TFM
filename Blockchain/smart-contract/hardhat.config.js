@@ -14,7 +14,7 @@ module.exports = {
     networks: {
         besu: {
             url: "http://localhost:8545", // URL de tu nodo Besu
-            accounts: ["0x31bbb6e905345d5079297556eb6c5133199e67fab850350bfc7e87e4c8754313"], // Clave privada
+            accounts: ["0xfabf93655bd63e64ddd19ff733b52822a7279b4d5b6f7fc93c9f4deda3b5681f"], // Clave privada
         },
         localhost: {
             url: "http://127.0.0.1:8545",

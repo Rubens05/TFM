@@ -10,8 +10,8 @@ const uploadDocRoutes = require('./routes/docRoutes'); // Nuevo nombre para docu
 const uploadImgRoutes = require('./routes/imgRoutes'); // Nueva ruta para imágenes
 const uploadQRCodeRoutes = require('./routes/qrCodeRoutes'); // Nueva ruta para qrCodes
 
-// **Nueva ruta para blockchain**
-const blockchainRoutes   = require('../backend/blockchainController/smartContractRoutes'); // <-- aquí tu router RESTful
+// Nueva ruta para blockchain
+const blockchainRoutes = require('../backend/blockchainController/smartContractRoutes');
 
 const app = express();
 
@@ -38,8 +38,8 @@ app.use('/docs', express.static(path.join(__dirname, 'docs')));
 app.use('/qrcodes', express.static(path.join(__dirname, 'qrcodes')));
 
 // Ruta para blockchain
-// POST   /api/data/records      { …JSON… }
-// GET    /api/data/records/:key
+// POST   /api/data/saveDataRecord      { …JSON… }
+// GET    /api/data/getDataRecord/:key
 app.use('/api/data', blockchainRoutes);
 
 // Servir React en producción

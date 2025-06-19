@@ -25,3 +25,5 @@ yarn-error.log*
 # Docs and imgs
 /docs
 /imgs
+
+.env

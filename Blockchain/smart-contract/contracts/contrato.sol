@@ -4,53 +4,45 @@ pragma solidity ^0.8.0;
 contract Contrato {
     // Estructura para almacenar el hash y timestamp
     struct DataRecord {
-        uint256 timestamp;   // Fecha de updatedAt en segundos Unix
-        bytes32 dataHash;    // Hash calculado de name + currentAttributes + updatedAt
+        uint256 timestamp; // Fecha de updatedAt en segundos Unix
+        bytes32 dataHash; // Hash calculado de name + currentAttributes + updatedAt
     }
 
-    // Mapeo desde una clave única (por ejemplo, keccak256 del _id del JSON) al registro de datos
-    mapping(bytes32 => DataRecord) public records;
+    // Mapeo desde el ObjectId (12 bytes) al registro de datos
+    mapping(bytes12 => DataRecord) public records;
 
-    // Eventos para registrar el guardado de hash
+    // Evento para registrar el guardado de hash
     event DataHashStored(
-        bytes32 indexed recordKey,
+        bytes12 indexed oid,
         uint256 timestamp,
         bytes32 dataHash
     );
 
     /**
-     * @notice Almacena el hash de un registro a partir de un identificador y timestamp
-     * @param recordKey Clave única del registro (por ejemplo, keccak256(abi.encodePacked(_id)))
+     * @notice Almacena el hash de un registro a partir de su ObjectId de MongoDB
+     * @param oid 12 bytes correspondientes al ObjectId
      * @param timestamp Fecha de updatedAt en Unix seconds
      * @param dataHash Hash calculado off-chain de name + currentAttributes + updatedAt
      */
     function storeHash(
-        bytes32 recordKey,
+        bytes12 oid,
         uint256 timestamp,
         bytes32 dataHash
     ) external {
-        // Guardamos el registro
-        records[recordKey] = DataRecord({
-            timestamp: timestamp,
-            dataHash: dataHash
-        });
-
-        // Emitimos evento
-        emit DataHashStored(recordKey, timestamp, dataHash);
+        records[oid] = DataRecord({timestamp: timestamp, dataHash: dataHash});
+        emit DataHashStored(oid, timestamp, dataHash);
     }
 
     /**
-     * @notice Recupera el registro almacenado para una clave dada
-     * @param recordKey Clave única del registro
+     * @notice Recupera el registro almacenado para un ObjectId dado
+     * @param oid 12 bytes correspondientes al ObjectId
      * @return timestamp Fecha almacenada
-     * @return dataHash Hash almacenado
+     * @return dataHash   Hash almacenado
      */
-    function getHash(bytes32 recordKey)
-        external
-        view
-        returns (uint256 timestamp, bytes32 dataHash)
-    {
-        DataRecord storage rec = records[recordKey];
+    function getHash(
+        bytes12 oid
+    ) external view returns (uint256 timestamp, bytes32 dataHash) {
+        DataRecord storage rec = records[oid];
         return (rec.timestamp, rec.dataHash);
     }
 }

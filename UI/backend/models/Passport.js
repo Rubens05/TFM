@@ -37,19 +37,13 @@ const passportSchema = new mongoose.Schema(
     versions: [versionSchema],
     // qrCode almacena la ruta al código QR asociado al pasaporte (/qrcode/id.png)
     qrCode: { type: String, default: null },
-    // —— Campos blockchain ——
-    recordKey: { 
-      type: String, 
-      default: null, 
-      index: true,             // mejora búsquedas
-      description: 'Clave única on-chain (bytes32 hex)'
-    },
+    // hash del DPP en la blockchain
     dataHash: {
       type: String,
       default: null,
       description: 'Hash calculado de name+currentAttributes+updatedAt'
     }
- },  
+  },
   { timestamps: true }
 );
 

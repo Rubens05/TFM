@@ -42,15 +42,16 @@ router.post('/', async (req, res) => {
 
     //Debugear antes de blockchain
     console.log("DPP guardado en la base de datos:", newPassport);
-     // Integración blockchain: guardamos el hash y obtenemos la key
-    const recordKey = await saveDataRecord({
-      _id: { $oid: newPassport._id.toString() },
+
+    // Integración blockchain: guardamos el hash y obtenemos la key
+    const hash = await saveDataRecord({
+      _id: { $oid: newPassport._id },
       name: newPassport.name,
       currentAttributes: newPassport.currentAttributes,
       updatedAt: { $date: newPassport.updatedAt.toISOString() }
     });
-    console.log("Record key obtenido:", recordKey);
-    newPassport.recordKey = recordKey;
+    console.log("Hash guardado en blockchain:", hash);
+    newPassport.dataHash = hash;
     await newPassport.save();
 
     return res.status(201).json(newPassport);
