@@ -106,6 +106,77 @@ function App() {
     setInitialFormData(passport);
   };
 
+  // dentro de App.js
+  const handleVerifyIntegrity = async (passport) => {
+    try {
+      // 1) Verificar masterHash // Funciona
+      const { data: masterRes } = await axios.post(
+        `/api/data/verifyMasterHash`,
+        {
+          dppData: {
+            _id: passport._id,
+            name: passport.name,
+            currentAttributes: passport.versions[0].attributes,
+            timestamp: { $date: passport.createdAt }
+          },
+          offChainHash: passport.masterHash
+        }
+      );
+      const masterValid = masterRes.valid;
+
+
+      // 2) Verificar cada versionHash de todas las versiones
+      const versionChecks = await Promise.all(
+        passport.versions.map(async (verObj) => {
+          // usa createdAt de la versión o fallback al createdAt del documento
+          const verDate = verObj.createdAt
+            ? new Date(verObj.createdAt)
+            : new Date(passport.createdAt);
+
+          const { data: vRes } = await axios.post(
+            `/api/data/verifyVersionHash`,
+            {
+              dppData: {
+                _id: passport._id,
+                name: passport.name,
+                currentAttributes: verObj.attributes,
+                timestamp: { $date: verDate.toISOString() }
+              },
+              offChainVersionHash: verObj.versionHash,
+              version: verObj.version
+            }
+          );
+          return { version: verObj.version, valid: vRes.valid };
+        })
+      );
+
+      // 3) Verificar dynamicHash
+      const { data: dynRes } = await axios.post(
+        `/api/data/verifyDynamicHash`,
+        {
+          dppData: {
+            _id: passport._id
+          },
+          offChainDynamicHash: passport.dynamicHash
+        }
+      );
+      const dynValid = dynRes.valid;
+
+      // 4) Mostrar resultados
+      let msg = `🔒 Integridad DPP ${passport._id}:\n\n`;
+      msg += `• MasterHash: ${masterValid ? '✅ OK' : '❌ MISMATCH'}\n`;
+      versionChecks.forEach(({ version, valid }) => {
+        msg += `• Version ${version}: ${valid ? '✅ OK' : '❌ MISMATCH'}\n`;
+      });
+      msg += `• DynamicHash: ${dynValid ? '✅ OK' : '❌ MISMATCH'}\n`;
+
+      alert(msg);
+    } catch (err) {
+      console.error('Error verificando integridad:', err);
+      alert('❌ Error al verificar integridad. Revisa la consola para más detalles.');
+    }
+  };
+
   const handleCancelEdit = () => {
     setEditingId(null);
     setInitialFormData(null);
@@ -193,6 +264,7 @@ function App() {
                   setSelectedVersions={setSelectedVersions}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
+                  onVerifyIntegrity={handleVerifyIntegrity}
                 />
               )
             }

@@ -8,7 +8,10 @@ const {
     saveDynamicHash: _saveDynamicHash,
     saveVersionHash: _saveVersionHash,
     getVersionHash: _getVersionHash,
-    getVersionHashes: _getVersionHashes
+    getVersionHashes: _getVersionHashes,
+    verifyMasterHash: _verifyMasterHash,
+    verifyVersionHash: _verifyVersionHash,
+    verifyDynamicHash: _verifyDynamicHash
 } = require('./blockchainController');
 
 
@@ -94,6 +97,54 @@ router.get('/getDynamicHash/:oid', async (req, res) => {
         res.json({ dynamicHash });
     } catch (err) {
         console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+
+
+/*** Hashes verification ***/
+// Verify master hash
+router.post('/verifyMasterHash', async (req, res) => {
+    try {
+        const { dppData, offChainHash } = req.body;
+        if (!dppData || !offChainHash) {
+            return res.status(400).json({ error: 'Debe enviar dppData y offChainHash.' });
+        }
+        const result = await _verifyMasterHash(dppData, offChainHash);
+        res.json(result);
+    } catch (err) {
+        console.error('[verifyMasterHash] ', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Verify version hash
+router.post('/verifyVersionHash', async (req, res) => {
+    try {
+        const { dppData, offChainVersionHash, version } = req.body;
+        if (!dppData || !offChainVersionHash || typeof version !== 'number') {
+            return res.status(400).json({ error: 'Debe enviar dppData, offChainVersionHash y version.' });
+        }
+        const result = await _verifyVersionHash(dppData, offChainVersionHash, version);
+        res.json(result);
+    } catch (err) {
+        console.error('[verifyVersionHash] ', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Verify dynamic hash
+router.post('/verifyDynamicHash', async (req, res) => {
+    try {
+        const { dppData, offChainDynamicHash } = req.body;
+        if (!dppData || !offChainDynamicHash) {
+            return res.status(400).json({ error: 'Debe enviar dppData y offChainDynamicHash.' });
+        }
+        const result = await _verifyDynamicHash(dppData, offChainDynamicHash);
+        res.json(result);
+    } catch (err) {
+        console.error('[verifyDynamicHash] ', err);
         res.status(500).json({ error: err.message });
     }
 });

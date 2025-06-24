@@ -8,14 +8,14 @@ const path = require('path');
 
 // Importart interface Blockchain
 // Importamos la interfaz blockchain
-const { saveDataRecord, saveMasterHash, saveVersionHash, saveDynamicHash } = require('../blockchainController/blockchainController');
-const { version } = require('os');
+const { saveMasterHash, saveVersionHash, saveDynamicHash } = require('../blockchainController/blockchainController');
 
 // Crear un nuevo DPP (versión 1)
 // Se espera que "attributes" venga como objeto de secciones,
 // por ejemplo: { Origen: { pais: "España", ciudad: "Madrid", datasets: [...] }, Logística: { transporte: "Camión", datasets: [...] } }
 router.post('/', async (req, res) => {
   try {
+    const creationDate = new Date();
     const { name, attributes, datasets, photo, relatedPassportVersions } = req.body;
     // En este nuevo formato, se asume que los datasets pueden estar incluidos dentro de cada sección;
     // Si además se envía un array datasets global, se usará para la versión global.
@@ -28,12 +28,14 @@ router.post('/', async (req, res) => {
       photo: initialPhoto,
       // Si no se envía, ponemos array vacío
       relatedPassportVersions: relatedPassportVersions || [],
+      createdAt: creationDate
     };
     // Crear el DPP inicial
     const newPassport = new Passport({
       name,
       currentAttributes: attributes,
       versions: [initialVersion],
+      createdAt:  creationDate
     });
     // Guardar el DPP en la base de datos
     await newPassport.save();
@@ -44,7 +46,7 @@ router.post('/', async (req, res) => {
       _id: newPassport._id,
       name: newPassport.name,
       currentAttributes: newPassport.currentAttributes,
-      updatedAt: { $date: newPassport.updatedAt.toISOString() }
+      timestamp: { $date: newPassport.createdAt.toISOString() }
     });
     newPassport.masterHash = hash;
     await newPassport.save();
@@ -55,7 +57,7 @@ router.post('/', async (req, res) => {
       _id: newPassport._id,
       name: newPassport.name,
       currentAttributes: newPassport.currentAttributes,
-      updatedAt: { $date: newPassport.updatedAt.toISOString() },
+      timestamp: { $date: newPassport.createdAt.toISOString() },
       version: initialVersion.version
     });
     // Asignar el hash de la versión al DPP
@@ -66,7 +68,7 @@ router.post('/', async (req, res) => {
     // Guardar el hash dinámico del DPP
     const dynamicHash = await saveDynamicHash({
       _id: newPassport._id,
-      updatedAt: { $date: newPassport.updatedAt.toISOString() }
+      timestamp: { $date: newPassport.createdAt.toISOString() }
     });
 
     // Guardar el dynamicHash en el DPP
@@ -83,6 +85,8 @@ router.post('/', async (req, res) => {
 // Actualizar (editar) un DPP: se añade una nueva versión
 router.put('/:id', async (req, res) => {
   try {
+    const creationDate = new Date();
+    console.log("actualizando dpp")
     const { attributes, datasets, photo, relatedPassportVersions } = req.body;
     // "attributes" es el objeto final con secciones.
     // "datasets" es el array global final (si se usa) y
@@ -101,30 +105,35 @@ router.put('/:id', async (req, res) => {
 
     // Guardar el hash de la versión en blockchain
     const newVersionHash = await saveVersionHash({
-      _id: { $oid: passport._id.toString() },
+      _id: passport.id,
       name: passport.name,
       currentAttributes: passport.currentAttributes,
-      updatedAt: { $date: passport.updatedAt.toISOString() },
+      timestamp: { $date: creationDate.toISOString() }, 
       version: newVersionNumber
     });
 
     // Estructurar la nueva versión
+    console.log("a");
     const newVersion = {
       version: newVersionNumber,
       attributes: attributes,
       datasets: datasets || [],
       photo: photo || null,
-      createdAt: new Date(),
+      createdAt: creationDate,
       relatedPassportVersions: relatedPassportVersions || [],
       versionHash: newVersionHash,
     };
+    console.log("b");
 
     // Insertar la nueva versión
     passport.versions.push(newVersion);
+    console.log("c");
 
     // Actualizar el hash dinámico del DPP
+    console.log("dyn");
     const newDynamicHash = await saveDynamicHash({
-      _id: { $oid: passport._id.toString() }
+      _id: passport.id,
+      timestamp: { $date: creationDate.toISOString() }
     });
 
     // Guardar el dynamicHash en el DPP

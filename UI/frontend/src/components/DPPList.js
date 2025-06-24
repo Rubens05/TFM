@@ -5,7 +5,7 @@ import DropdownMultiselect from './DropdownVersion.js'; // Assuming this is the 
 import React, { useState } from 'react';
 
 
-function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onDelete }) {
+function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onDelete, onVerifyIntegrity }) {
   // map para saber, por cada passport._id, si mostramos el QR o la foto
   const [showQRMap, setShowQRMap] = useState({});
   // Estado para controlar qué DPPs están expandidos
@@ -262,6 +262,23 @@ function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onD
                       {/*Si el nombre del pasaporte es "Lithium Battery" no se muestran los botones de editar y eliminar*/}
                       {passport.name !== "Lithium Battery" && (
                         <div style={Styles.footerStyle}>
+                          <button onClick={() => onVerifyIntegrity(passport)}
+                            style={{
+                              backgroundColor: '#007BFF',
+                              color: 'white',
+                              padding: '10px 20px',
+                              border: 'none',
+                              borderRadius: '5px',
+                              cursor: 'pointer',
+                              marginLeft: '10px',
+                              fontSize: '16px',
+                              fontWeight: 'bold',
+                              transition: 'background-color 0.3s',
+                              display: 'inline-block',
+                              textAlign: 'center',
+                              textDecoration: 'none',
+                              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+                            }}>Verify Integrity</button>
                           <button onClick={() => onEdit(passport)}
                             style={{
                               backgroundColor: '#007BFF',

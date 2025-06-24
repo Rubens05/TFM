@@ -28,7 +28,7 @@ const versionSchema = new mongoose.Schema({
   versionHash: {
     type: String,
     default: null,
-    description: 'Hash de la versión calculado con name+currentAttributes+updatedAt+version'
+    description: 'Hash de la versión calculado con name+currentAttributes+timestamp+version'
   },
 });
 
@@ -48,7 +48,7 @@ const passportSchema = new mongoose.Schema(
     masterHash: {
       type: String,
       default: null,
-      description: 'Hash original calculado con name+currentAttributes+updatedAt'
+      description: 'Hash original calculado con name+currentAttributes+timestamp'
     },
     dynamicHash: {
       type: String,
