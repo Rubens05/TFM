@@ -8,7 +8,8 @@ const path = require('path');
 
 // Importart interface Blockchain
 // Importamos la interfaz blockchain
-const { saveDataRecord } = require('../blockchainController/blockchainController');
+const { saveDataRecord, saveMasterHash, saveVersionHash, saveDynamicHash } = require('../blockchainController/blockchainController');
+const { version } = require('os');
 
 // Crear un nuevo DPP (versión 1)
 // Se espera que "attributes" venga como objeto de secciones,
@@ -43,16 +44,48 @@ router.post('/', async (req, res) => {
     //Debugear antes de blockchain
     console.log("DPP guardado en la base de datos:", newPassport);
 
-    // Integración blockchain: guardamos el hash y obtenemos la key
-    const hash = await saveDataRecord({
+    // Integración blockchain: guardamos el masterHash del DPP
+    const hash = await saveMasterHash({
       _id: { $oid: newPassport._id },
       name: newPassport.name,
       currentAttributes: newPassport.currentAttributes,
       updatedAt: { $date: newPassport.updatedAt.toISOString() }
     });
     console.log("Hash guardado en blockchain:", hash);
-    newPassport.dataHash = hash;
+    newPassport.masterHash = hash;
     await newPassport.save();
+
+    // Guardar el hash de la versión inicial en blockchain
+    const versionHash = await saveVersionHash({
+      _id: { $oid: newPassport._id },
+      name: newPassport.name,
+      currentAttributes: newPassport.currentAttributes,
+      updatedAt: { $date: newPassport.updatedAt.toISOString() },
+      version: initialVersion.version
+    });
+    // Asignar el hash de la versión al DPP
+    initialVersion.versionHash = versionHash;
+    newPassport.versions[0] = initialVersion; // Actualizar la primera versión con
+
+    console.log("Hash de la versión guardado en blockchain:", versionHash);
+    // Guardar el hash dinámico del DPP
+    await newPassport.save();
+
+    const dynamicHash = await saveDynamicHash({
+      _id: { $oid: newPassport._id },
+      masterHash: newPassport.masterHash,
+      versions: newPassport.versions.reduce((acc, version) => {
+        acc[version.version] = version.versionHash;
+        return acc;
+      }, {}),
+      updatedAt: { $date: newPassport.updatedAt.toISOString() }
+    });
+    console.log("Hash dinámico guardado en blockchain:", dynamicHash);
+
+    // Guardar el dynamicHash en el DPP
+    newPassport.dynamicHash = dynamicHash;
+    await newPassport.save();
+
 
     return res.status(201).json(newPassport);
   } catch (error) {
@@ -78,6 +111,17 @@ router.put('/:id', async (req, res) => {
 
     // Crear la nueva versión
     const newVersionNumber = passport.versions.length + 1;
+
+    // Guardar el hash de la versión en blockchain
+    const newVersionHash = await saveVersionHash({
+      _id: { $oid: passport._id.toString() },
+      name: passport.name,
+      currentAttributes: passport.currentAttributes,
+      updatedAt: { $date: passport.updatedAt.toISOString() },
+      version: newVersionNumber
+    });
+
+    // Estructurar la nueva versión
     const newVersion = {
       version: newVersionNumber,
       attributes: attributes,
@@ -85,23 +129,20 @@ router.put('/:id', async (req, res) => {
       photo: photo || null,
       createdAt: new Date(),
       relatedPassportVersions: relatedPassportVersions || [],
+      versionHash: newVersionHash,
     };
 
     // Insertar la nueva versión
     passport.versions.push(newVersion);
-    // Guardar el DPP actualizado
-    await passport.save();
 
-    // Integración blockchain: actualizamos el hash on-chain con la misma key
-    const recordKey = await saveDataRecord({
-      _id: { $oid: passport._id.toString() },
-      name: passport.name,
-      currentAttributes: passport.currentAttributes,
-      updatedAt: { $date: passport.updatedAt.toISOString() }
+    // Actualizar el hash dinámico del DPP
+    const newDynamicHash = await saveDynamicHash({
+      _id: { $oid: passport._id.toString() }
     });
-    passport.recordKey = recordKey;
-    await passport.save();
 
+    // Guardar el dynamicHash en el DPP
+    passport.dynamicHash = newDynamicHash;
+    await passport.save();
     return res.status(200).json(passport);
   } catch (error) {
     return res.status(500).json({ error: error.message });

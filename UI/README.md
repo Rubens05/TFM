@@ -29,3 +29,16 @@ Blockchain Verts, implementar algo parecido que muestre por bloques como se va a
 
 Control de errores:
     Cuando falle la parte de blockchain, hacer rollback y eliminar del mongo todo lo relacionado con ese DPP
+
+Validación Blockchain
+    Cambiar los hashes para que sean:
+        -HashMaestro: por DPP (dinámico) según se va actualizando el DPP, este hash se actualiza según los hashes de las versiones. La primera vez se creará en función de los atributos.
+        -HashVersion: por versión, se generará cada vez que se cree una versión y será creará en función de los atributos, nombre, id y fecha de actualización.
+    Añadir opción de verificar integridad de una versión individual.
+        Mostrar el hash calculado en tiempo real con la fecha en el momento del calculo
+        Mostrar el hash guardado en la blockchain con la fecha de guardado
+        Mostrar el hash guardado en la base de datos con la fecha de guardado
+    Añadir opción de verificar integridad de todo el DPP completo
+        1-Sacar hashMaestro de blockchain
+        2-Sacar hashMaestro de bbdd
+        3-Genenar el hash a partir del  

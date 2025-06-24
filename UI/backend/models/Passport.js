@@ -9,8 +9,7 @@ const versionSchema = new mongoose.Schema({
   datasets: { type: [Object], default: [] }, // Cada versión con su propio array de datasets
   photo: { type: Object, default: null },      // Objeto con los datos de la foto (originalname, encoding, mimetype, size, filename)
   createdAt: { type: Date, default: Date.now },
-  // Nuevo campo: relaciona con una versión concreta de otro passport
-
+  // Campo que relaciona con una versión concreta de otro passport
   relatedPassportVersions: [
     {
       passport: {
@@ -24,7 +23,13 @@ const versionSchema = new mongoose.Schema({
       },
       name: { type: String, required: true } // Nombre del DPP relacionado
     }
-  ]
+  ],
+  // hash de la versión
+  versionHash: {
+    type: String,
+    default: null,
+    description: 'Hash de la versión calculado con name+currentAttributes+updatedAt+version'
+  },
 });
 
 const passportSchema = new mongoose.Schema(
@@ -37,11 +42,16 @@ const passportSchema = new mongoose.Schema(
     versions: [versionSchema],
     // qrCode almacena la ruta al código QR asociado al pasaporte (/qrcode/id.png)
     qrCode: { type: String, default: null },
-    // hash del DPP en la blockchain
-    dataHash: {
+    // hash original del DPP en la blockchain
+    masterHash: {
       type: String,
       default: null,
-      description: 'Hash calculado de name+currentAttributes+updatedAt'
+      description: 'Hash original calculado con name+currentAttributes+updatedAt'
+    },
+    dynamicHash: {
+      type: String,
+      default: null,
+      description: 'Hash dinámico calculado con los hashes de las versiones y el masterHash'
     }
   },
   { timestamps: true }
