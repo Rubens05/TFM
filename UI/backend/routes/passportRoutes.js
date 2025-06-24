@@ -17,7 +17,6 @@ const { version } = require('os');
 router.post('/', async (req, res) => {
   try {
     const { name, attributes, datasets, photo, relatedPassportVersions } = req.body;
-    console.log("POST /api/passports - req.body:", req.body);
     // En este nuevo formato, se asume que los datasets pueden estar incluidos dentro de cada sección;
     // Si además se envía un array datasets global, se usará para la versión global.
     const initialDatasets = datasets || [];
@@ -36,28 +35,24 @@ router.post('/', async (req, res) => {
       currentAttributes: attributes,
       versions: [initialVersion],
     });
-    console.log("Nuevo DPP creado:", newPassport);
-    console.log("Related passports:", relatedPassportVersions);
     // Guardar el DPP en la base de datos
     await newPassport.save();
 
     //Debugear antes de blockchain
-    console.log("DPP guardado en la base de datos:", newPassport);
-
     // Integración blockchain: guardamos el masterHash del DPP
     const hash = await saveMasterHash({
-      _id: { $oid: newPassport._id },
+      _id: newPassport._id,
       name: newPassport.name,
       currentAttributes: newPassport.currentAttributes,
       updatedAt: { $date: newPassport.updatedAt.toISOString() }
     });
-    console.log("Hash guardado en blockchain:", hash);
     newPassport.masterHash = hash;
     await newPassport.save();
 
+
     // Guardar el hash de la versión inicial en blockchain
     const versionHash = await saveVersionHash({
-      _id: { $oid: newPassport._id },
+      _id: newPassport._id,
       name: newPassport.name,
       currentAttributes: newPassport.currentAttributes,
       updatedAt: { $date: newPassport.updatedAt.toISOString() },
@@ -65,22 +60,14 @@ router.post('/', async (req, res) => {
     });
     // Asignar el hash de la versión al DPP
     initialVersion.versionHash = versionHash;
-    newPassport.versions[0] = initialVersion; // Actualizar la primera versión con
-
-    console.log("Hash de la versión guardado en blockchain:", versionHash);
-    // Guardar el hash dinámico del DPP
+    newPassport.versions[0] = initialVersion; 
     await newPassport.save();
 
+    // Guardar el hash dinámico del DPP
     const dynamicHash = await saveDynamicHash({
-      _id: { $oid: newPassport._id },
-      masterHash: newPassport.masterHash,
-      versions: newPassport.versions.reduce((acc, version) => {
-        acc[version.version] = version.versionHash;
-        return acc;
-      }, {}),
+      _id: newPassport._id,
       updatedAt: { $date: newPassport.updatedAt.toISOString() }
     });
-    console.log("Hash dinámico guardado en blockchain:", dynamicHash);
 
     // Guardar el dynamicHash en el DPP
     newPassport.dynamicHash = dynamicHash;

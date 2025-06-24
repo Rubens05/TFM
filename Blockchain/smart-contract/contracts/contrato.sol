@@ -10,7 +10,8 @@ contract Contrato {
     // Estructura para almacenar el hash y timestamp
     struct VersionHash {
         uint256 timestamp; // Fecha de updatedAt en segundos Unix
-        bytes32 versionHash; // Hash calculado de name + currentAttributes + updatedAt
+        bytes32 versionHash; // Hash calculado de name + currentAttributes + updatedAt + version
+        uint256 version; // Número de versión asociado
     }
     // Estructura para almacenar el hash y timestamp
     struct DynamicHash {
@@ -22,9 +23,10 @@ contract Contrato {
     mapping(bytes12 => MasterHash) public records;
     // Para un mismo ObjetcId, se almacena el hash dinámico (se sobreescribe cada vez que se actualiza)
     mapping(bytes12 => DynamicHash) public dynamicRecords;
-    // Para un mismo ObjectId, se pueden almacenar múltiples versiones
-    mapping(bytes12 => VersionHash[]) public versionRecords;
-
+    // Mapping para múltiples versiones por OID y por número de versión
+    mapping(bytes12 => mapping(uint256 => VersionHash)) public versionRecords;
+    // Listado de versiones existentes por OID
+    mapping(bytes12 => uint256[]) private versionList;
     // Evento para registrar el guardado de masterHash
     event MasterHashStored(
         bytes12 indexed oid,
@@ -43,8 +45,10 @@ contract Contrato {
     event VersionHashStored(
         bytes12 indexed oid,
         uint256 timestamp,
-        bytes32 versionHash
+        bytes32 versionHash,
+        uint256 version
     );
+    
 
     /**
      * @notice Almacena el hash de un registro a partir de su ObjectId de MongoDB
@@ -78,37 +82,31 @@ contract Contrato {
     }
 
     /**
-     * @notice Almacena una versión del hash de un registro a partir de su ObjectId de MongoDB
-     * @param oid 12 bytes correspondientes al ObjectId
-     * @param timestamp Fecha de updatedAt en Unix seconds
-     * @param versionHash Hash calculado off-chain de name + currentAttributes + updatedAt + version
+     * @notice Almacena un versionHash para un número de versión específico
      */
     function storeVersionHash(
         bytes12 oid,
         uint256 timestamp,
-        bytes32 versionHash
+        bytes32 versionHash,
+        uint256 dppVersion
     ) external {
-        versionRecords[oid].push(
-            VersionHash({timestamp: timestamp, versionHash: versionHash})
-        );
-        emit VersionHashStored(oid, timestamp, versionHash);
+        // Si es la primera vez que se añade esta versión, guardamos índice
+        if (versionRecords[oid][dppVersion].timestamp == 0) {
+            versionList[oid].push(dppVersion);
+        }
+        versionRecords[oid][dppVersion] = VersionHash(timestamp, versionHash, dppVersion);
+        emit VersionHashStored(oid, timestamp, versionHash, dppVersion);
     }
 
     /**
-     * @notice Recupera el versionHash de la versión especificada para un ObjectId dado
-     * @param oid   12 bytes correspondientes al ObjectId
-     * @return timestamp
-     * @return versionHash
+     * @notice Recupera el versionHash para una versión específica
      */
-
     function getVersionHash(
         bytes12 oid,
-        uint256 versionIndex
-    ) external view returns (uint256 timestamp, bytes32 versionHash) {
-        VersionHash[] storage versions = versionRecords[oid];
-        require(versionIndex < versions.length, "Version index out of bounds");
-        VersionHash storage version = versions[versionIndex];
-        return (version.timestamp, version.versionHash);
+        uint256 dppVersion
+    ) external view returns (uint256 timestamp, bytes32 versionHash, uint256 version) {
+        VersionHash storage v = versionRecords[oid][dppVersion];
+        return (v.timestamp, v.versionHash, v.version);
     }
 
     /**
@@ -116,24 +114,31 @@ contract Contrato {
      * @param oid 12 bytes correspondientes al ObjectId
      * @return timestamps Array de fechas almacenadas
      * @return versionHashes Array de hashes almacenados
+     * @return versions Array de números de versión
      */
     function getVersionHashes(
         bytes12 oid
-    )
-        external
-        view
-        returns (uint256[] memory timestamps, bytes32[] memory versionHashes)
-    {
-        VersionHash[] storage versions = versionRecords[oid];
-        uint256 length = versions.length;
-        timestamps = new uint256[](length);
-        versionHashes = new bytes32[](length);
-        for (uint256 i = 0; i < length; i++) {
-            timestamps[i] = versions[i].timestamp;
-            versionHashes[i] = versions[i].versionHash;
+    ) external view returns (
+        uint256[] memory timestamps,
+        bytes32[] memory versionHashes,
+        uint256[] memory versions
+    ) {
+        uint256[] storage list = versionList[oid];
+        uint256 len = list.length;
+        timestamps = new uint256[](len);
+        versionHashes = new bytes32[](len);
+        versions = new uint256[](len);
+
+        for (uint256 i = 0; i < len; i++) {
+            uint256 vNum = list[i];
+            VersionHash storage v = versionRecords[oid][vNum];
+            timestamps[i] = v.timestamp;
+            versionHashes[i] = v.versionHash;
+            versions[i] = v.version;
         }
-        return (timestamps, versionHashes);
+        return (timestamps, versionHashes, versions);
     }
+
 
     /**
      * @notice Almacena el hash dinámico de un registro a partir de su ObjectId de MongoDB

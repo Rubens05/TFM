@@ -34,6 +34,8 @@ const versionSchema = new mongoose.Schema({
 
 const passportSchema = new mongoose.Schema(
   {
+    // id del pasaporte (ObjectId)
+    _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
     // nombre del dpp
     name: { type: String, required: true },
     // currentAttributes contendrá la versión "activa" (última)

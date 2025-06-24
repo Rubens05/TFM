@@ -244,7 +244,6 @@ function DPPForm({ passports, onSubmit, editingId, initialData, onCancel }) {
 
   // Al enviar el formulario:
   const handleSubmit = async (e) => {
-    setLoading(true);
     e.preventDefault();
 
     // 1. Validar que exista al menos una sección y que en cada sección haya al menos un atributo.
@@ -394,6 +393,7 @@ function DPPForm({ passports, onSubmit, editingId, initialData, onCancel }) {
     };
 
     // Pantalla de carga
+    setLoading(true);
     await onSubmit(formDataToSend);
     setLoading(false);
     // Quitar pantalla de carga y limpiar formulario
