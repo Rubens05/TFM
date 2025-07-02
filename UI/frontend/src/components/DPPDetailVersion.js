@@ -135,6 +135,28 @@ export default function DPPDetailVersionPage() {
                                                         </ul>
                                                     </div>
                                                 )}
+
+                                                <div style={Styles.sectionStyle}>
+                                                    <h4>Related Passports</h4>
+                                                    {thisVersion.relatedPassportVersions && thisVersion.relatedPassportVersions.length > 0 ? (
+
+                                                        thisVersion.relatedPassportVersions.map((related, index) => (
+                                                            <li key={index}>
+                                                                <strong>
+                                                                    <a
+                                                                        href={`http://localhost:5000/dpp/${related.passport}/${related.version}`}
+                                                                        style={{ color: '#007BFF', textDecoration: 'underline' }}
+
+                                                                    >{related.name} (v{related.version})
+
+                                                                    </a></strong>
+                                                            </li>
+                                                        ))
+
+                                                    ) : (
+                                                        <p>No related passports.</p>
+                                                    )}
+                                                </div>
                                             </div>
                                         );
                                     })

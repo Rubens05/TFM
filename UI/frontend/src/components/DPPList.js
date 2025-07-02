@@ -264,7 +264,7 @@ function DPPList({ passports, selectedVersions, setSelectedVersions, onEdit, onD
                         <div style={Styles.footerStyle}>
                           <button onClick={() => onVerifyIntegrity(passport)}
                             style={{
-                              backgroundColor: '#007BFF',
+                              backgroundColor: 'green',
                               color: 'white',
                               padding: '10px 20px',
                               border: 'none',

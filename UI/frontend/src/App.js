@@ -63,9 +63,9 @@ function App() {
         created = createRes.data;
 
         // Generar el código QR para el nuevo DPP
-        // La URL debe ser la IP pública del servidor http://98.80.123.251:5000
+        // La URL debe ser la IP pública del servidor http://XXXXXXXX:5000
 
-        const publicUrl = `http://98.80.123.251:5000/dpp/${created._id}`;
+        const publicUrl = `http://XXXXXXXXXX:5000/dpp/${created._id}`;
         const qrDataUrl = await QRCode.toDataURL(publicUrl, {
           margin: 2,
           width: 300

@@ -125,6 +125,27 @@ export default function DPPDetailPage() {
                                                                         ))}
                                                                     </div>
                                                                 )}
+                                                                <div style={Styles.sectionStyle}>
+                                                                    <h4>Related Passports</h4>
+                                                                    {selectedVersion.relatedPassportVersions && selectedVersion.relatedPassportVersions.length > 0 ? (
+
+                                                                        selectedVersion.relatedPassportVersions.map((related, index) => (
+                                                                            <li key={index}>
+                                                                                <strong>
+                                                                                    <a
+                                                                                        href={`http://localhost:5000/dpp/${related.passport}/${related.version}`}
+                                                                                        style={{ color: '#007BFF', textDecoration: 'underline' }}
+
+                                                                                    >{related.name} (v{related.version})
+
+                                                                                    </a></strong>
+                                                                            </li>
+                                                                        ))
+
+                                                                    ) : (
+                                                                        <p>No related passports.</p>
+                                                                    )}
+                                                                </div>
                                                             </div>
                                                         );
                                                     })}
