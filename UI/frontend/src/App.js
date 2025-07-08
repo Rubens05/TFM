@@ -196,10 +196,10 @@ function App() {
           <>
             <div style={{ backgroundColor: '#f0f0f0', padding: '20px', fontFamily: 'Arial, sans-serif', borderRadius: '8px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
               <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-                {/*Funditec image*/}
+                {/*Logo*/}
                 <img
-                  src="funditecrb.png"
-                  alt="Funditec Logo"
+                  src="logo.png"
+                  alt="Logo"
                   style={{ width: '100%', height: 'auto', marginBottom: '20px' }}
                 />
                 {/* Display del titulo DPP y al lado el boton de crear */}
@@ -274,10 +274,10 @@ function App() {
         <Route path="/dpp/:id" element={<>
           <div style={{ backgroundColor: '#f0f0f0', padding: '20px', fontFamily: 'Arial, sans-serif', borderRadius: '8px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
             <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-              {/*Funditec image*/}
+              {/*Logo*/}
               <img
-                src="/funditecrb.png"
-                alt="Funditec Logo"
+                src="/logo.png"
+                alt="Logo"
                 style={{ width: '100%', height: 'auto', marginBottom: '20px' }}
               />
             </div>
@@ -292,10 +292,10 @@ function App() {
           <>
             <div style={{ backgroundColor: '#f0f0f0', padding: '20px', fontFamily: 'Arial, sans-serif', borderRadius: '8px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
               <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-                {/*Funditec image*/}
+                {/*Logo*/}
                 <img
-                  src="/funditecrb.png"
-                  alt="Funditec Logo"
+                  src="/logo.png"
+                  alt="Logo"
                   style={{ width: '100%', height: 'auto', marginBottom: '20px' }}
                 />
               </div>

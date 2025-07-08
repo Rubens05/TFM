@@ -43,7 +43,7 @@ function toUnixTimestamp(isoDate) {
  * @returns {bytes32}
  */
 function computeMasterHash(name, currentAttributes, unixTs) {
-  console.log(name, currentAttributes, unixTs);
+  // console.log(name, currentAttributes, unixTs);
   const payload = name + JSON.stringify(currentAttributes) + unixTs
   return keccak256(toUtf8Bytes(payload))
 }
@@ -57,9 +57,9 @@ function computeMasterHash(name, currentAttributes, unixTs) {
  * @returns {bytes32}
  */
 function computeVersionHash(name, currentAttributes, unixTs, version) {
-  console.log(".................................................................................................................................................");
-  console.log(name, currentAttributes, unixTs, version);
-  console.log(".................................................................................................................................................");
+  // console.log(".................................................................................................................................................");
+  // console.log(name, currentAttributes, unixTs, version);
+  // console.log(".................................................................................................................................................");
   const payload = name + JSON.stringify(currentAttributes) + unixTs + version;
   return keccak256(toUtf8Bytes(payload))
 }
@@ -74,8 +74,8 @@ function computeVersionHash(name, currentAttributes, unixTs, version) {
  * @returns {string}               bytes32 hex "0x..."
  */
 function computeDynamicHash(masterHash, versionArr) {
-  console.log(masterHash, versionArr);
-  // 1) Concatenamos como strings
+  // console.log(masterHash, versionArr);
+  // // 1) Concatenamos como strings
   let payload = masterHash;
   for (const h of versionArr) {
     payload += h;
@@ -300,10 +300,11 @@ async function verifyMasterHash(dppData, offChainHash) {
 
   // 2) Recupera el hash almacenado en la blockchain
   const [, onChainHash] = await contract.getMasterHash(oid12);
-
   console.log("computedHash:" + computedHash);
   console.log("onChainHash:" + onChainHash);
   console.log("offChainHash:" + offChainHash);
+  console.log("Integridad masterHash correcta")
+
   // 3) Compara los tres valores
   const valid = (
     computedHash === onChainHash &&
@@ -356,12 +357,11 @@ async function verifyVersionHash(dppData, offChainVersionHash, version) {
   const [, onChainVersionHash] = await contract.getVersionHash(oid12, version);
 
   // 3) Compara los tres valores
-  console.log(".................................................................................................................................................");
   console.log("Version:" + version);
   console.log("computedVersionHash:" + computedVersionHash);
   console.log("onChainVersionHash:" + onChainVersionHash);
   console.log("offChainVersionHash:" + offChainVersionHash);
-  console.log(".................................................................................................................................................");
+  console.log("Integridad versionHash correcta")
   const valid = (
     computedVersionHash === onChainVersionHash &&
     computedVersionHash === offChainVersionHash &&
@@ -400,25 +400,25 @@ async function verifyDynamicHash(dppData, offChainDynamicHash) {
 
   // 1) Recupera el masterHash almacenado en la blockchain
   const [, onChainMasterHash] = await contract.getMasterHash(oid12);
-  console.log('onChainMasterHash:', onChainMasterHash);
+  // console.log('onChainMasterHash:', onChainMasterHash);
 
   // 2) Recupera el dynamicHash almacenado y su timestamp (timestamp ignorado aquí)
   const [, onChainDynamicHash] = await contract.getDynamicHash(oid12);
-  console.log('onChainDynamicHash:', onChainDynamicHash);
+  // console.log('onChainDynamicHash:', onChainDynamicHash);
 
   // 3) Recupera todas las versiones para reconstruir el hash dinámico
   //    getVersionHashes devuelve [timestampsArr, versionHashesArr, versionsArr]
   const [, versionHashesArr] = await contract.getVersionHashes(oid12);
-  console.log('versionHashesArr:', versionHashesArr);
+  // console.log('versionHashesArr:', versionHashesArr);
 
   // 4) Recalcula el dynamicHash localmente
   const computedDynamicHash = computeDynamicHash(onChainMasterHash, versionHashesArr);
-  console.log('computedDynamicHash:', computedDynamicHash);
 
   // 5) Compara los tres valores
   console.log("computedDynamicHash:" + computedDynamicHash);
   console.log("onChainDynamicHash:" + onChainDynamicHash);
   console.log("offChainDynamicHash:" + offChainDynamicHash);
+  console.log("Integridad dynamicHash correcta")
   const valid = (
     computedDynamicHash === onChainDynamicHash &&
     computedDynamicHash === offChainDynamicHash &&
