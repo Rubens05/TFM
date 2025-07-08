@@ -82,7 +82,9 @@ Una vez completada la configuración del servidor ahora levantamos el frotend y 
  
 Desde el directorio `frontend/`, ejecutar el comando:
  
-c
+```bash
+npm run build
+```
 
 ### 2.2 Desplegar la aplicacicón
 
