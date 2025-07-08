@@ -108,7 +108,7 @@ Los DPPs existentes podrán ser editados mediante el mismo formulario anterior, 
 ### 3.3 Eliminar DPP
 Los DPPs podrán ser eliminados, eliminando del mismo modo las imagenes y documentos asociados a ellos.
 ### 3.4 Verificar Integridad
-Se puede verificar la integridad de un DPP mediante una triple verificación de hashes en la blockchain: `masterHash/`, `versionHash/` y `dynamicHash/`, si alguna de estas verificaciones falla la información del DPP se considerará no íntegra.
+Se puede verificar la integridad de un DPP mediante una triple verificación de hashes en la blockchain: `masterHash`, `versionHash` y `dynamicHash`, si alguna de estas verificaciones falla la información del DPP se considerará no íntegra.
 
 
 
